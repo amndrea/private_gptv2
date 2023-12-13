@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h2 style="color: cadetblue;"> Cancellazione dell'user {{ user_to_delete.username }}  </h2><br> <br>
+        <p>Sei sicuro di voler cancellare l'utente {{ user_to_delete.username }}?</p>
+            
+        <form method="post" action="">
+            {% csrf_token %}
+            <input class="my_button3" type="submit" value="Conferma cancellazione">
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{%load static%}
+{% load crispy_forms_tags %}
+
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h3 style="color: cadetblue;"> Creazione di un nuovo utente </h3>
+        <form method="post"> {% csrf_token %}
+            {{form | crispy}}
+            <input type="submit" class="my_button" value="Crea">
+        </form>
+        
+    </div>
+
+{% endblock %}

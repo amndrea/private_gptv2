@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block head %}
+    <script src="{% static 'script/script.js' %}" defer></script>
+{% endblock %}
+{% block content %}    
+    <div style="text-align: center;"> <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>  </div>
+
+
+    {%if user.is_staff %} 
+        <div style="text-align: center;"> 
+            <h3 style="color: cadetblue;"> Benvenuto admin </h3> 
+            <p> In questa sezione puoi gestire gli utenti, creare nuovi utenti o rimuoverli </p> 
+            <a href="{% url 'list_user' %}" class="my_button"> Gestione Utenti</a> <br> <br>
+            <p> In questa sezione puoi accede alla console completa di amministrazione</p> 
+            <a href="{% url 'admin:index' %}" class="my_button"> Pannello Admin </a> <br> <br>
+            <p> In questa sezione puoi accedere a ElisaGPT </p> 
+            <a href="#" class="my_button"> ElisaGPT </a><br> <br>
+            <p> Revisione delle risposte </p> 
+            <button onclick= "addPulsanti()" class="my_button" >Revisione</button>
+        </div>
+    {% else %}
+        <div style="text-align: center;"> 
+            <h3 style="color: cadetblue;"> Benvenuto {{ user.username }} </h3>
+            <p> Accedi a ElisaGPT </p>
+            <a href="{% url 'retrival:competion'%}? type=0" class="my_button"> ElisaGPT </a><br> <br>
+
+        </div>
+        
+    {% endif %}
+
+    <div class="div-bassa-2">
+        <a href="{% url 'logout' %}" class="my_button">Logout</a>
+    </div>
+
+</div>
+
+
+
+{% endblock %}

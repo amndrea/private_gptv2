@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h3 style="color: cadetblue;"> Grazie per aver usato ElisaGPT A PRESTO! </h3>
+    
+        <div class="div-bassa-2">
+            <a href="{% url 'mostra_home' %}" class="my_button">Home</a>
+        </div>
+    </div>
+{% endblock %}

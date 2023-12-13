@@ -1,0 +1,57 @@
+.my_button{
+    background-color: #00C78C;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.my_button2{
+    background-color: #27408B;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.my_button3{
+    background-color: red;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+.div-pulsanti button {
+    margin-bottom: 10px;
+    margin-right: 10px;
+}
+
+.button_scelta{
+    background-color: red;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+.div-bassa-2{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.div-bassa-2 button {
+    margin:  50px;
+}
+

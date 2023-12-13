@@ -1,0 +1,23 @@
+OK) Login utente
+OK) Creazione di nuovi utenti
+OK) Lista degli utenti per l'admin
+OK) Modifica password da parte dell'admin
+OK) Rimozione di un utente da parte dell'admin
+
+
+
+Gestione
+) Ingest
+)List Ingested
+)Completion
+) Chunks Retrieval
+) Ingest
+
+)List Ingested
+)Delete Ingested
+)Health
+) Revisione domande /risposte
+
+
+
+

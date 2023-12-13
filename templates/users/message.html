@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+    <p>{{ errore }}</p>
+        {% if errore  == "1" %}
+             <h2 style="color:#B0171F;"> Errore nel cambio password </h2><br> <br>
+        {% else %}
+            <h2 style="color: cadetblue;"> Cambio password avvenuto con successo   </h2><br> <br>
+        {% endif %}
+    <div class="div-bassa-2">
+        <a href="{% url 'home_login' %}" class="my_button">Home</a>
+    </div>
+    </div>
+    
+{% endblock %}

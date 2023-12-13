@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <style>
+        .my_button3{
+            background-color: red;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h3 style="color: cadetblue;"> Lista degli utenti </h3>
+        
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Nome</th>
+                    <th scope="col">email</th>
+                    <th scope="col"> </th>
+                    <th scope="col"> </th>
+                </tr>
+            </thead>
+            <br>
+
+            {% for user in users %}
+                <tbody>
+                    <th scope="row">{{ forloop.counter0 }} </th>
+                    <td> {{ user.username}}</td>
+                    <td> {{user.email}}</td>
+                    <td> 
+                        <a href="{% url 'update_password' user.pk %}" class="my_button"> Modifica password</a> <br> <br>
+                    </td>
+                    <td>
+                        <a class="my_button3" href="{% url 'delete_user' user.pk %}">Elimina Utente</a>
+
+                    </td>
+            {% endfor%}
+        </table>
+
+        <div class="div-pulsanti">
+            <a href="{% url 'home_login'%}" class="my_button"> Home</a>
+            <a href="{% url 'create_user' %}" class="my_button"> Crea Utente</a>
+        </div>
+    </div>
+
+{%endblock %}
