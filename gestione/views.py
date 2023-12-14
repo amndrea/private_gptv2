@@ -62,3 +62,9 @@ def ingest_list(request):
 
 
 
+# -------------------------------------------------------------------------------- #
+# Method for completion retrival, if the request method is get, this funciton
+# redirect to chat template
+# -------------------------------------------------------------------------------- #
+def completion(request):
+    pass
