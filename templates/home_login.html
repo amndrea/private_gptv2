@@ -2,12 +2,57 @@
 {% load static %}
 {% block head %}
     <script src="{% static 'script/script.js' %}" defer></script>
+    <style>
+        .navbar-nav > li {
+            margin-left: 35px ;
+    }
+    </style>
 {% endblock %}
 {% block content %}    
-    <div style="text-align: center;"> <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>  </div>
+    
+    {%if user.is_staff %}
+        <nav class="navbar navbar-expand-lg navbar-light bg-light" style="background-color: #008B8B;">
+            <img src="{% static 'imgs/logo.png' %}" width="250" height="40" class="d-inline-block align-top" alt="">
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">E-ListaGPT</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
+                        Gestione Utenti
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#">Crea Nuovo Utente</a>
+                            <a class="dropdown-item" href="{% url 'list_user' %}">Visualizza Utenti</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
+                        Gestione Documenti
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#">Aggiungi un documento</a>
+                            <a class="dropdown-item" href="#">Lista di documenti</a>
+                            <a class="dropdown-item" href="#">Rimuovi un documento</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
+                        Revisione Risposte
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#">Non visualizzate </a>
+                            <a class="dropdown-item" href="#">Visualizzate in attesa</a>
+                            <a class="dropdown-item" href="#">Approvate</a>
+                            <a class="dropdown-item" href="#">Rifiutate</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+     
 
-
-    {%if user.is_staff %} 
         <div style="text-align: center;"> 
             <h3 style="color: cadetblue;"> Benvenuto admin </h3> 
             <p> In questa sezione puoi gestire gli utenti, creare nuovi utenti o rimuoverli </p> 
