@@ -6,28 +6,33 @@
 
 - __django__
 
-      - pip install django
+       pip install django
   Django is the web framework with which this interface for privateGPT is created
 
 
 - __reuests__
 
-      - pip install requests
+      pip install requests
   Library for making request 
 
 
 - __django-braces__
   
-      - pip install django-braces
+        pip install django-braces
   Braces is alibrary to manage user's permissions
 
 
 - __crispy_forms__ & __bootstrap__
 
-      - pip install django-crispy-forms
+        pip install django-crispy-forms
         pip install crispy_bootstrap4
   Libraries for making more beautifully forms and pages
 
+
+## Starting the application ##
+After installing all the necessary libraries, start the web server        
+
+        python manage.py runserver
   
 ## Division of the application ##
 
