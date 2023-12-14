@@ -1,10 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block head %}
+{% endblock %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h3 style="color: cadetblue;">  Stato del server  </h3> <br>
+    
+    {% if status == 200 %}
+        <div class="container">
+            <h1 style="color: cadetblue" class="display-4"> <strong> Stato OK</strong></h1>
+            <p class="lead"></p>
+            <hr class="my-4">
+            <p> Il server è attualmente in buono stato, torna alla home per interagire con E-LisaGPT</p>
+            <a class="my_button" href="{% url 'home_login' %}" role="button">Home</a>
+        </div>
+        
+    {% else %}
+        <div class="container">
+            <h1 style="color: darkred" class="display-4"> <strong> Stato OK</strong></h1>
+            <p class="lead"></p>
+            <hr class="my-4">
+            <p> Il server è attualmente offline, non è possibile interagire con E-LisaGPT</p>
+            <a class="my_button" href="{% url 'home_login' %}" role="button">Home</a>
+        </div>
+    {% endif %}
+    </div>
+{% endblock %}

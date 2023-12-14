@@ -7,15 +7,15 @@ OK) Rimozione di un utente da parte dell'admin
 
 
 Gestione
+OK) Health
+) List Ingested
 ) Ingest
-)List Ingested
-)Completion
-) Chunks Retrieval
-) Ingest
+) Delete Ingested
 
-)List Ingested
-)Delete Ingested
-)Health
+) Completion
+) Chunks Retrieval
+
+
 ) Revisione domande /risposte
 
 
