@@ -3,7 +3,6 @@ from django.contrib.auth.models import Group, User
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
-from django.contrib.auth.forms import PasswordChangeForm
 
 # ----------------------------------------------------------------------------------------#
 # Form to create a user and insert it into the group 'base_user'
@@ -25,6 +24,15 @@ class FormCreateUser(UserCreationForm):
         g.user_set.add(user)
         return user
 
+# ----------------------------------------------------------------------------------------#
+# Form to create a user and insert it into the group 'expert_user'
+# ----------------------------------------------------------------------------------------#
+class FormCreeateExpertUser(FormCreateUser):
+    def save(self, commit=True):
+        user = super().save(commit)
+        g = Group.objects.get(name="expert_user")
+        g.user_set.add(user)
+        return user
 
 # ----------------------------------------------------------------------------------------#
 # Form to create a user and insert it into the group 'base_user'

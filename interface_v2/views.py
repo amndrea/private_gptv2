@@ -21,13 +21,21 @@ def show_home_logged(request):
 #                         Views for the users management
 # ******************************************************************************************** #
 # -------------------------------------------------------------------------------------------- #
-# Class for creating users
+# Class for creating base user or expert users
 # ---------------------------------------------------------------------------------------------#
 class UserCreateView(PermissionRequiredMixin, CreateView):
     permission_required = "is_staff"
     template_name = "users/create_user.html"
     form_class = FormCreateUser
 
+    def get_success_url(self):
+        return reverse_lazy("list_user")
+
+
+class User_expertCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "is_staff"
+    template_name = "users/create_user.html"
+    form_class = FormCreeateExpertUser
     def get_success_url(self):
         return reverse_lazy("list_user")
 

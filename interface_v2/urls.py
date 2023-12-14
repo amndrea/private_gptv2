@@ -30,8 +30,10 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     # URL where I show the home of the logged-in user
     path('home_login/', show_home_logged, name="home_login"),
-    # URL for create a new user
+    # URL for create a new base user
     path('create_user/', UserCreateView.as_view(), name="create_user"),
+    # URL for create a new expert user
+    path('create_expert_user/', User_expertCreateView.as_view(), name="create_expert_user"),
     # URL where I show the list of all users
     path('list_user/', UserListView.as_view(), name="list_user"),
     # URl for delete a user given the user pk
