@@ -59,3 +59,6 @@ def ingest_list(request):
     nomi_file = set(doc["file_name"] for doc in doc_info_list)
     context = {"documenti": nomi_file}
     return render(request, template_name="gestione/list_ingest.html", context=context)
+
+
+

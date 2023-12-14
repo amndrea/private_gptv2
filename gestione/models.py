@@ -25,12 +25,11 @@ class Answer(models.Model):
 class Question(models.Model):
     answer = models.ForeignKey(Answer, on_delete = models.CASCADE)
     # ****************************************** #
-    # state = 0 === Domanda da approvare
-    # state = 1 === Domanda approvata
-    # state = 2 === Domanda non approvata
+    # state = 0 === Answer to be approved
+    # state = 1 === Answer approved
+    # state = 2 === Answer not approved
     state = models.IntegerField(default=0)
     # ****************************************** #
-    # visualizzato/non visualizzato da parte dell'admin
     # False = not displayed
     # True = displayed
     displayed = models.BooleanField(default=False)
