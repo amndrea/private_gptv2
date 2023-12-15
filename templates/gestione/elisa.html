@@ -16,14 +16,6 @@
             height: 50px;
             border-radius: 10px;
         }
-        .my_button2{
-                background-color: #27408B;
-                color: white;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-        }
     </style>
 {% endblock %}
 
@@ -33,29 +25,35 @@
         <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
         <h3 style="color: cadetblue;"> <strong> ElisaGPT</strong></h3> <br>
     
-        <form method="post" action="{% url 'gestione:completion' %}">
-            {{ form|crispy}}
-            {% csrf_token %}
-            <input type="text" name="questions" id="questions"><br><br>
-            <button class="my_button" type="submit">Invia</button>
-        </form><br>
-    
+        
+        {% if type == "completion" %}
+            <form method="post" action="{% url 'gestione:completion' %}">
+                {{ form|crispy}}
+                {% csrf_token %}
+                <input type="text" name="questions" id="questions"><br><br>
+                <button class="my_button" type="submit">Invia</button>
+            </form><br>
+        {% else %}
+                <form method="post" action="{% url 'gestione:chunks' %}">
+                {{ form|crispy}}
+                {% csrf_token %}
+                <input type="text" name="questions" id="questions"><br><br>
+                <button class="my_button" type="submit">Invia</button>
+            </form><br>
+        {% endif %}
     
         {% for answer in answers %}
             <div class="card text-center">
                 <div class="card-body">
                     <h5 class="card-title">{{answer.user_request}}</h5>
                     <p class="card-text">{{answer.answer}}</p>
-                    
                 </div>
                 <div class="card-footer text-muted">
-                {{answer.date}}
+                    {{answer.date}}
                 </div>
             </div>
         {% endfor %}
         <br>
         <a class="my_button" href="{% url 'home_login' %}"> Home</a> <br> <br>
     </div>
-    
-
 {% endblock %}

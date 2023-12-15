@@ -6,6 +6,8 @@ from gestione.models import Answer
 # ************************************************************************ #
 # privateGPT server URL
 HALFURL = "http://10.1.1.109:8001/v1/"
+
+
 # ************************************************************************ #
 
 
@@ -23,6 +25,7 @@ def answers_list(user):
     answers = Answer.objects.filter(user=user).order_by('-date')[:5]
     return answers
 
+
 # ----------------------------------------------------------------------- #
 #          function to save a chat response to the database
 # ----------------------------------------------------------------------- #
@@ -30,10 +33,11 @@ def create_answer(user_request, response, user, doc_id=None, file_name=None):
     answer = Answer()
     answer.user_request = user_request
     answer.answer = response
-    answer.user= user
+    answer.user = user
     answer.doc_id = doc_id
     answer.file_name = file_name
     answer.save()
+
 
 # ----------------------------------------------------------------------- #
 #     Function that returns all the ingested documents in JSON format
@@ -47,6 +51,32 @@ def json_documenti():
         return data
     except Exception as e:
         print(e)
+
+
+# ----------------------------------------------------------------------- #
+#     Function for extract data from response of chunks
+# ----------------------------------------------------------------------- #
+def json_document_chunks(result, what):
+    #result_object = result.get("object")
+    #result_model = result.get("model")
+    data_list = result.get("data", [])
+
+    for item in data_list:
+        if item.get("object") == "context.chunk":
+            score = item.get("score")
+            document_data = item.get("document", {})
+            text = item.get("text")
+
+            if document_data.get("object") == "ingest.document":
+                doc_id = document_data.get("doc_id")
+                file_name = document_data.get("doc_metadata", {}).get("file_name")
+                original_text = document_data.get("original_text")
+
+                print("Score:", score)
+                print("Text:", text)
+                print("Doc ID:", doc_id)
+                print("File Name:", file_name)
+                print("Original Text:", original_text)
 
 
 # ********************************************************************************** #
@@ -80,35 +110,34 @@ def ingest_list(request):
     return render(request, template_name="gestione/list_ingest.html", context=context)
 
 
-
 # -------------------------------------------------------------------------------- #
-# Method for completion retrival, if the request method is get, this funciton
+# Method for completion retrival, if the request method is get, this function
 # redirect to chat template
 # -------------------------------------------------------------------------------- #
 def completion(request):
-
     # I show the user's last 5 messages in the template
     answers = answers_list(request.user)
-    context = {"answers": answers}
-    context['type'] = 'completion'
+    context = {
+        "answers": answers,
+        "type": 'completion'
+    }
 
     # shows the chat template
     if request.method == 'GET':
         return render(request, template_name='gestione/elisa.html', context=context)
 
-
     elif request.method == 'POST':
         user_request = request.POST.get('questions')
-        api_url = HALFURL +'completions'
+        api_url = HALFURL + 'completions'
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         payload = {
             'prompt': user_request,
-            'system_prompt':'talk to me on italian, your name is Elisa ',
+            'system_prompt': 'talk to me on italian, your name is Elisa ',
             'use_context': 'true'}  # Include la ricerca all'interno dei documenti
 
         response = requests.post(api_url, headers=headers, json=payload)
 
-        # If the response was successful I create a Answer object and display it in the template
+        # If the response was successful I create an Answer object and display it in the template
         # and render the template with a GET to continue
         if response.status_code == 200:
             result = response.json()
@@ -120,5 +149,44 @@ def completion(request):
             create_answer(user_request, content_response, request.user, doc_id=doc_id, file_name=file_name)
 
             return redirect('gestione:completion', permanent=False)
+        else:
+            return JsonResponse({'error': 'Errore nella chiamata API'}, status=500)
+
+
+def chunks(request):
+    # I show the user's last 5 messages in the template
+    answers = answers_list(request.user)
+    context = {"answers": answers,
+               "type": 'chunks'
+               }
+    # shows the chat template
+    if request.method == 'GET':
+        return render(request, template_name='gestione/elisa.html', context=context)
+
+    elif request.method == 'POST':
+        user_request = request.POST.get('questions')
+        api_url = HALFURL + 'chunks'
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        payload = {
+            'text': user_request,
+            'system_prompt': 'talk to me on italian, your name is Elisa ',
+        }
+        response = requests.post(api_url, headers=headers, json=payload)
+
+        # If the response was successful I create an Answer object and display it in the template
+        # and render the template with a GET to continue
+        if response.status_code == 200:
+            result=response.json()
+            json_document_chunks(result)
+            #result = response.json()
+            #first_result = result["choices"][0]
+            #content_response = first_result["message"]["content"]
+            #doc_id = first_result["sources"][0]["document"]["doc_id"]
+            #file_name = first_result["sources"][0]["document"]["doc_metadata"]["file_name"]
+
+            #create_answer(user_request, content_response, request.user, doc_id=doc_id, file_name=file_name)
+
+            #return redirect('gestione:chunks', permanent=False)
+            return JsonResponse({'result': result})
         else:
             return JsonResponse({'error': 'Errore nella chiamata API'}, status=500)

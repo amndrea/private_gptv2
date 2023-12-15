@@ -10,12 +10,15 @@
             font-size: 18px;
             font-style: italic;
         }
+        nav.my-custom-navbar.navbar-light {
+            background-color: cadetblue !important; 
+        }
     </style>
 {% endblock %}
 {% block content %}    
     
     {%if user.is_staff %}
-        <nav class="navbar navbar-expand-lg navbar-light bg-light" style="background-color: #008B8B;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light my-custom-navbar">
             <img src="{% static 'imgs/logo.png' %}" width="250" height="40" class="d-inline-block align-top" alt="">
             <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav">
@@ -25,7 +28,7 @@
                         </a>
                         <div class="dropdown-menu">
                             <a class="dropdown-item" href="{% url 'gestione:completion' %}">Competion Chat</a>
-                            <a class="dropdown-item" href="#">Chunks Chat</a>
+                            <a class="dropdown-item" href="{% url 'gestione:chunks' %}">Chatta con i documenti</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown">

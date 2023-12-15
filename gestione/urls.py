@@ -16,8 +16,9 @@ urlpatterns = [
 
 
     # URL for completion retrival
-    path('completion', completion, name="completion"),
+    path('completion/', completion, name="completion"),
 
-    # URL for
+    # URL for chunks retrival
+    path('chunks/', chunks, name="chunks"),
 
 ]
