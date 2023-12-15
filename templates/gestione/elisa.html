@@ -1,9 +1,61 @@
 {% extends 'base.html' %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
 {% load static %}
 
 {% block head %}
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <style>
+        .btn img{
+            max-width: 50px;
+            max-height: 50px;
+        }
+        #questions {
+            width: 1000px;
+            height: 50px;
+            border-radius: 10px;
+        }
+        .my_button2{
+                background-color: #27408B;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+        }
+    </style>
 {% endblock %}
 
-{% block content %}
+{% block content %}    
+
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h3 style="color: cadetblue;"> <strong> ElisaGPT</strong></h3> <br>
     
+        <form method="post" action="{% url 'gestione:completion' %}">
+            {{ form|crispy}}
+            {% csrf_token %}
+            <input type="text" name="questions" id="questions"><br><br>
+            <button class="my_button" type="submit">Invia</button>
+        </form><br>
+    
+    
+        {% for answer in answers %}
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">{{answer.user_request}}</h5>
+                    <p class="card-text">{{answer.answer}}</p>
+                    
+                </div>
+                <div class="card-footer text-muted">
+                {{answer.date}}
+                </div>
+            </div>
+        {% endfor %}
+        <br>
+        <a class="my_button" href="{% url 'home_login' %}"> Home</a> <br> <br>
+    </div>
+    
+
 {% endblock %}

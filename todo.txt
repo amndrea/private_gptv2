@@ -22,3 +22,11 @@ OK) Health
 
 
             <a href="{% url 'create_user' %}" class="my_button"> Crea Utente</a>
+
+
+
+
+Nel template di elsa, nel for per ogni domanda, dopo che ho implementanto la risposta
+ <p class="card-text">{{answer.answer}}</p>
+          <a href="{% url 'ingestion:crea_domanda' messaggio.pk 0 %}" class="btn "> <img src="{% static 'imgs/sbagliata.png'%}" alt="Non utile "></a>
+                    <a href="{% url 'ingestion:crea_domanda' messaggio.pk 1 %}" class="btn "> <img src="{% static 'imgs/ok.png'%}" alt="Utile "></a>
