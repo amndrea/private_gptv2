@@ -1,0 +1,18 @@
+        payload = {
+            'prompt': user_request,
+            'system_prompt': 'talk to me on italian, your name is Elisa ',
+            'use_context': 'true',
+            'context_filter':{
+                'docs_ids': doc_id
+            }
+        }
+
+        # Utilizzo del context filtrato
+
+
+
+
+            # Estrazione di altro contenuto per le risposte troncate
+            contents = [choice['message']['content'] for choice in result['choices']]
+            for component in contents:
+                print(component)

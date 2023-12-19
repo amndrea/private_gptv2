@@ -37,3 +37,20 @@ class Question(models.Model):
     satisfied = models.BooleanField(default=False)
     # comment from the user who sends the question to the admin
     comment = models.CharField(max_length=300, default= ' ' )
+
+
+
+# ------------------------------------------------------------------------------------------------ #
+#       Class that describes the request model for Embedded model
+# ------------------------------------------------------------------------------------------------ #
+class DocRetrivalRequest(models.Model):
+    user_request = models.CharField(max_length=2048)
+    date = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete = models.CASCADE)
+
+class DocRetrivalResponse(models.Model):
+    doc_request = models.ForeignKey(DocRetrivalRequest, on_delete = models.CASCADE)
+    text = models.CharField(max_length=2048)
+    score = models.IntegerField(default=0)
+    file_name = models.CharField(max_length=60, blank=True, null=True)
+    doc_id = models.CharField(max_length=60, blank=True, null=True)
