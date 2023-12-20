@@ -16,3 +16,19 @@
             contents = [choice['message']['content'] for choice in result['choices']]
             for component in contents:
                 print(component)
+
+
+         ALLA FINE DI CHUNKS
+         # call extraction data from json for render in a template the most relevant document
+            # data_form_doc = json_document_chunks(result, 2)
+            # print(data_form_doc)
+
+            # result = response.json()
+            # first_result = result["choices"][0]
+            # content_response = first_result["message"]["content"]
+            # doc_id = first_result["sources"][0]["document"]["doc_id"]
+            # file_name = first_result["sources"][0]["document"]["doc_metadata"]["file_name"]
+
+            # create_answer(user_request, content_response, request.user, doc_id=doc_id, file_name=file_name)
+
+            # return redirect('gestione:chunks', permanent=False)

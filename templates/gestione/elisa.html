@@ -33,26 +33,61 @@
                 <input type="text" name="questions" id="questions"><br><br>
                 <button class="my_button" type="submit">Invia</button>
             </form><br>
+            
+            {% for answer in answers %}
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">{{answer.user_request}}</h5>
+                        <p class="card-text">{{answer.answer}}</p>
+                    </div>
+                    <div class="card-footer text-muted">
+                        {{answer.date}}
+                    </div>
+                </div>
+        {% endfor %}
+        <br>
+            
         {% else %}
-                <form method="post" action="{% url 'gestione:chunks' %}">
+            
+            <form method="post" action="{% url 'gestione:chunks' %}">
                 {{ form|crispy}}
                 {% csrf_token %}
                 <input type="text" name="questions" id="questions"><br><br>
                 <button class="my_button" type="submit">Invia</button>
             </form><br>
+            
+            
+            {% for doc_request in doc_requests %}
+
+                <div class="card text-center">
+                    <div class="card-body" style="background-color: cadetblue">
+                        <h5 class="card-title">{{doc_request.user_request}}</h5>
+                        <ul>
+                            {% for doc_answer in doc_answers %}
+                                {% if doc_answer.doc_request == doc_request %}
+                                    <li>
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{doc_answer.text}}</h6>
+                                                <p class="card-text">{{doc_answer.file_name}}</p>
+                                            </div>
+                                            <div class="card-footer text-muted">
+                                                {{doc_answer.score}}
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+
+                    </div>
+                    <div class="card-footer text-muted">
+                        {{doc_request.date}}
+                    </div>
+                </div>
+            {% endfor %}
+            
         {% endif %}
-    
-        {% for answer in answers %}
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">{{answer.user_request}}</h5>
-                    <p class="card-text">{{answer.answer}}</p>
-                </div>
-                <div class="card-footer text-muted">
-                    {{answer.date}}
-                </div>
-            </div>
-        {% endfor %}
         <br>
         <a class="my_button" href="{% url 'home_login' %}"> Home</a> <br> <br>
     </div>

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 # ------------------------------------------------------------------------------------------------ #
 #                     Class that describes the response model
 # ------------------------------------------------------------------------------------------------ #
@@ -12,7 +13,7 @@ class Answer(models.Model):
     # date of request
     date = models.DateTimeField(auto_now_add=True)
     # user that make request
-    user = models.ForeignKey(User, on_delete = models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     # doc-id that caused the response
     doc_id = models.CharField(max_length=60, blank=True, null=True)
     # name of file that caused the response
@@ -23,7 +24,7 @@ class Answer(models.Model):
 #                     Class that describes the request model
 # ------------------------------------------------------------------------------------------------ #
 class Question(models.Model):
-    answer = models.ForeignKey(Answer, on_delete = models.CASCADE)
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
     # ****************************************** #
     # state = 0 === Answer to be approved
     # state = 1 === Answer approved
@@ -36,8 +37,7 @@ class Question(models.Model):
     # is user satisfied of response ?
     satisfied = models.BooleanField(default=False)
     # comment from the user who sends the question to the admin
-    comment = models.CharField(max_length=300, default= ' ' )
-
+    comment = models.CharField(max_length=300, default=' ')
 
 
 # ------------------------------------------------------------------------------------------------ #
@@ -46,10 +46,11 @@ class Question(models.Model):
 class DocRetrivalRequest(models.Model):
     user_request = models.CharField(max_length=2048)
     date = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete = models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
 
 class DocRetrivalResponse(models.Model):
-    doc_request = models.ForeignKey(DocRetrivalRequest, on_delete = models.CASCADE)
+    doc_request = models.ForeignKey(DocRetrivalRequest, on_delete=models.CASCADE)
     text = models.CharField(max_length=2048)
     score = models.IntegerField(default=0)
     file_name = models.CharField(max_length=60, blank=True, null=True)
