@@ -32,3 +32,28 @@
             # create_answer(user_request, content_response, request.user, doc_id=doc_id, file_name=file_name)
 
             # return redirect('gestione:chunks', permanent=False)
+
+
+
+     VIEW PER LA CANCELLAZIONE DI TUTTI I DOC_ID PER UN DATO FILENAME
+        def delete_doc(request, file_name=None):
+    data = json_documenti()
+    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
+
+    if request.method == "GET":
+        nomi_file = set(doc["file_name"] for doc in doc_info_list)
+        context = {
+            "documenti": nomi_file,
+            "delete":"1"
+        }
+        return render(request, template_name="gestione/list_ingest.html", context=context)
+    elif request.method == "POST":
+
+        doc_id = []
+        for doc_info in doc_info_list:
+            if doc_info["file_name"] == file_name:
+
+                doc_id.append(doc_info["doc_id"])
+
+        for doc_id in doc_id:
+            print(doc_id)

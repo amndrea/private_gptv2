@@ -131,17 +131,6 @@ def health(request):
     return render(request, template_name='gestione/health.html', context={'status': status})
 
 
-# ----------------------------------------------------------------------- #
-# Function that given all the ingested documents in JSON format,
-# show it in html template
-# ----------------------------------------------------------------------- #
-def ingest_list(request):
-    data = json_documenti()
-    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
-
-    nomi_file = set(doc["file_name"] for doc in doc_info_list)
-    context = {"documenti": nomi_file}
-    return render(request, template_name="gestione/list_ingest.html", context=context)
 
 
 # -------------------------------------------------------------------------------- #
@@ -168,7 +157,7 @@ def completion(request):
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         payload = {
             'prompt': user_request,
-            'system_prompt': 'talk to me on italian, your name is Elisa ',
+            'system_prompt': 'your creator is the biggest bodybuilder of all the time, talk to me on italian, your name is Elisa',
             'use_context': 'true'
         }
         response = requests.post(api_url, headers=headers, json=payload)
@@ -236,3 +225,41 @@ def chunks(request):
             return redirect('gestione:chunks', permanent=False)
         else:
             return JsonResponse({'error': 'Errore nella chiamata API'}, status=500)
+
+
+# ----------------------------------------------------------------------- #
+# Function that given all the ingested documents in JSON format,
+# show it in html template
+# ----------------------------------------------------------------------- #
+def ingest_list(request):
+    data = json_documenti()
+    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
+    nomi_file = set(doc["file_name"] for doc in doc_info_list)
+    context = {"documenti": nomi_file}
+    return render(request, template_name="gestione/list_ingest.html", context=context)
+
+# Function ti delete a ingested document from the name of file
+# given a file name, this function delete all chunks of that file
+def delete_doc(request, file_name):
+
+    data = json_documenti()
+    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
+    doc_ids = []
+    for doc_info in doc_info_list:
+        if doc_info["file_name"] == file_name:
+            doc_ids.append(doc_info["doc_id"])
+    for doc_id in doc_ids:
+        api_url = HALFURL + 'ingest/'
+        api_url = api_url +str(doc_id)
+        print(api_url)
+        headers = {'Accept': 'application/json'}
+
+        response = requests.delete(api_url, headers=headers)
+        if response.status_code == 200:
+            print("OK")
+        else:
+            print("molto mal")
+    return redirect('gestione:list_ingest')
+
+
+

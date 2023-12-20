@@ -1,6 +1,18 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block head %}
+    <style>
+        .red-button{
+            background-color: #B0171F;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+    
 {%endblock%}
 
 {% block content%}
@@ -13,17 +25,38 @@
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">Nome Documento </th>
+                    <th></th>
                 </tr>
             </thead>
             {% for documento in documenti %}
                 <tbody>
                     <tr>
                         <th scope="row">{{forloop.counter0}}</th>
-                        <td> {{ documento }} </td>     
-                        <td> </td>
+                        <td> {{ documento }} </td>   
+
+                        <td>
+                            {% if user.is_staff or 'expert_user' in user.groups.all.1.name  %}
+                                <form method="POST" action="{% url 'gestione:delete_doc' documento  %}"> 
+                                    {% csrf_token %}
+                                    <button class="red-button" type="submit" onclick="confirmDelete()">Elimina</button>
+                                </form>
+                                <script>
+                                    function confirmDelete() {
+                                        // Mostra una finestra di dialogo di conferma
+                                        var isConfirmed = confirm("Sei sicuro di voler eliminare questo documento?");
+                                
+                                        // Se l'utente conferma, invia il modulo
+                                        if (isConfirmed) {
+                                            document.getElementById("deleteForm").submit();
+                                        }
+                                    }
+                                </script>
+                            {% endif %}
+                        </td>
                     </tr>
                 </tbody>
             {% endfor %}
         </table>
+    
     </div>
 {% endblock %}
