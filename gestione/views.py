@@ -238,8 +238,11 @@ def ingest_list(request):
     context = {"documenti": nomi_file}
     return render(request, template_name="gestione/list_ingest.html", context=context)
 
-# Function ti delete a ingested document from the name of file
+# ----------------------------------------------------------------------- #
+
+# Function for delete a ingested document from the name of file
 # given a file name, this function delete all chunks of that file
+# ----------------------------------------------------------------------- #
 def delete_doc(request, file_name):
 
     data = json_documenti()
@@ -251,14 +254,9 @@ def delete_doc(request, file_name):
     for doc_id in doc_ids:
         api_url = HALFURL + 'ingest/'
         api_url = api_url +str(doc_id)
-        print(api_url)
         headers = {'Accept': 'application/json'}
 
         response = requests.delete(api_url, headers=headers)
-        if response.status_code == 200:
-            print("OK")
-        else:
-            print("molto mal")
     return redirect('gestione:list_ingest')
 
 
