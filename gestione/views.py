@@ -1,11 +1,11 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 import requests
 from gestione.models import *
 import time
 
 # ************************************************************************ #
-# privateGPT server URL
+#                      privateGPT server URL
 HALFURL = "http://10.1.1.109:8001/v1/"
 # ************************************************************************ #
 
@@ -54,7 +54,6 @@ def doc_retrival_response_list(user):
     ids_docs_request = [docs_request.id for docs_request in docs_request]
     docs_response = DocRetrivalResponse.objects.filter(doc_request__in=ids_docs_request)
     return docs_request, docs_response
-
 
 
 def create_answer(user_request, response, user, doc_id=None, file_name=None):
@@ -131,8 +130,6 @@ def health(request):
     return render(request, template_name='gestione/health.html', context={'status': status})
 
 
-
-
 # -------------------------------------------------------------------------------- #
 # Method for completion retrival, if the request method is get, this function
 # redirect to chat template
@@ -157,7 +154,7 @@ def completion(request):
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         payload = {
             'prompt': user_request,
-            'system_prompt': 'your creator is the biggest bodybuilder of all the time, talk to me on italian, your name is Elisa',
+            'system_prompt': 'talk to me on italian, your name is Elisa',
             'use_context': 'true'
         }
         response = requests.post(api_url, headers=headers, json=payload)
@@ -234,13 +231,13 @@ def chunks(request):
 def ingest_list(request):
     data = json_documenti()
     doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
-    nomi_file = set(doc["file_name"] for doc in doc_info_list)
-    context = {"documenti": nomi_file}
+    file_name = set(doc["file_name"] for doc in doc_info_list)
+    context = {"documenti": file_name}
     return render(request, template_name="gestione/list_ingest.html", context=context)
 
-# ----------------------------------------------------------------------- #
 
-# Function for delete a ingested document from the name of file
+# ----------------------------------------------------------------------- #
+# Function for delete an ingested document from the name of file
 # given a file name, this function delete all chunks of that file
 # ----------------------------------------------------------------------- #
 def delete_doc(request, file_name):
@@ -253,11 +250,78 @@ def delete_doc(request, file_name):
             doc_ids.append(doc_info["doc_id"])
     for doc_id in doc_ids:
         api_url = HALFURL + 'ingest/'
-        api_url = api_url +str(doc_id)
+        api_url = api_url + str(doc_id)
         headers = {'Accept': 'application/json'}
 
         response = requests.delete(api_url, headers=headers)
+        if response.status_code != 200:
+            print("error during delete request")
     return redirect('gestione:list_ingest')
 
 
+def already_exist(new_file_name):
+    data = json_documenti()
+    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
+    file_names = set(doc["file_name"] for doc in doc_info_list)
+    for file_name in file_names:
+        print(file_name)
+        if file_name == new_file_name:
+            return True
+    return False
 
+
+def upload(request):
+    if request.method == 'POST' and request.FILES.getlist('files'):
+        files = request.FILES.getlist('files')
+        for file in files:
+            if already_exist(file.name):
+                print(f'file {file.name} already exists')
+                # cosa vuoi fare ramon? sostituirlo o ignorarlo e andare avanti?
+                # in alternativa li vuoi tutti e due? genero un progressione v2, v3-.....
+            else:
+                pass
+                # controllo le estensioni del file
+            #else
+                # crea_file
+                # aggiungi_file
+                # aggiungo il file caricato alla lista di file cacariati per dare messggio di conf
+        return HttpResponse("Caricamento completato con successo.")
+    return render(request, 'gestione/upload.html')
+
+
+"""
+# --------------------------------------------------------------------- #
+# Funzione per ingestare un documento dato il path del documento
+# La funzione è utile per creare documenti e ingestarli senza passare
+# per la gui, quando una domanda viene approvata
+# --------------------------------------------------------------------- #
+def ingesta_file(file_path):
+    api_url = HALFURL + "/v1/ingest"
+    headers = {'Accept': 'application/json'}
+    files = {'file': open(file_path, 'rb')}
+    response = requests.post(api_url, headers=headers, files=files)
+    return response.status_code == 200
+
+
+
+def ingesta_documento(request):
+    if request.method == 'GET':
+        form = FileForm()
+        return render(request, template_name="ingest/update_file.html", context={"form": form})
+    else:
+        form = FileForm(request.POST, request.FILES)
+        if form.is_valid():
+            istanza = form.save()
+            upload_file = request.FILES['file']
+
+            if documento_gia_ingestato(upload_file.name):
+                # @TODO render a una pagina di conferma_documento gia ingestato
+                pass
+            if ingesta_file(default_storage.path(istanza.file.name)):
+                return redirect('ingestion:success', 'ok')
+            else:
+                print("Errore nella richiesta POST. Dettagli:")
+                print(response.status_code)
+                print(response.text)
+                return redirect('ingestion:success', 'fallito')
+"""
