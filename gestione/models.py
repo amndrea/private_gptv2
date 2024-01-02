@@ -55,3 +55,12 @@ class DocRetrivalResponse(models.Model):
     score = models.IntegerField(default=0)
     file_name = models.CharField(max_length=60, blank=True, null=True)
     doc_id = models.CharField(max_length=60, blank=True, null=True)
+
+
+# ------------------------------------------------------------------------------------------------ #
+#       Class that describes the ingest file model
+# ------------------------------------------------------------------------------------------------ #
+class IngestedFile(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    file = models.FileField(upload_to='upload/')
+    date = models.DateTimeField(auto_now_add=True)

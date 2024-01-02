@@ -29,6 +29,13 @@
   Libraries for making more beautifully forms and pages
 
 
+- __magic__
+
+        pip install python-magic
+  Library that allows you to determine the type of a file based on its contents
+
+
+
 ## Starting the application ##
 After installing all the necessary libraries, start the web server        
 

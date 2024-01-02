@@ -57,3 +57,14 @@
 
         for doc_id in doc_id:
             print(doc_id)
+
+
+
+
+tipi di file
+OpenDocument Spreadsheet  ==> opendocument exel
+Microsoft Excel   ==> start with
+OpenDocument Text  ==> Word opend
+Microsoft Word  ==> start with
+
+

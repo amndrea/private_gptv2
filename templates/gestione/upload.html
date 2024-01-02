@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
+{% load static %}
+
 
 {% block content %}
-    <form action="{% url 'gestione:upload' %}" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="file" name="files" multiple>
-        <input type="submit" value="Carica">
-    </form>
-
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h3 style="color: cadetblue;">  Seleziona uno o più file da caricare  </h3> <br>
+    
+        <form action="{% url 'gestione:upload' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="files" multiple>
+            <input type="submit" value="Carica">
+        </form>
+    </div>
 {% endblock %}

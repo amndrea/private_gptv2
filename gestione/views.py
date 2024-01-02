@@ -1,9 +1,12 @@
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
-import requests
 from gestione.models import *
 import time
-
+import os
+import shutil
+import tempfile
+import magic
+import requests
 # ************************************************************************ #
 #                      privateGPT server URL
 HALFURL = "http://10.1.1.109:8001/v1/"
@@ -99,6 +102,17 @@ def create_doc_retrival_response(doc_retrival_request, text, score, file_name, d
 
 
 # ----------------------------------------------------------------------- #
+#             function to save an infested document
+# ----------------------------------------------------------------------- #
+def create_ingested_file(user, file):
+    ingested_file = IngestedFile()
+    ingested_file.user = user
+    ingested_file.file = file
+    ingested_file.save()
+    return ingested_file
+
+
+# ----------------------------------------------------------------------- #
 #     Function that returns all the ingested documents in JSON format
 # ----------------------------------------------------------------------- #
 def json_documenti():
@@ -110,6 +124,36 @@ def json_documenti():
         return data
     except Exception as e:
         print(e)
+
+
+# ----------------------------------------------------------------------- #
+#  Function that checks whether a document with this name already exists
+# ----------------------------------------------------------------------- #
+def already_exist(new_file_name):
+    data = json_documenti()
+    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
+    file_names = set(doc["file_name"] for doc in doc_info_list)
+    for file_name in file_names:
+        if file_name == new_file_name:
+            return True
+    return False
+
+
+# Function fot control il one file is on supported format, and if i need to preprocess it
+# this function return
+# 0 if the document is not supported
+# 1 if the document is supported (textual)
+# 2 if the document can be supported with some preprocess operation
+def supported_format_file(file_path):
+    mime = magic.Magic()
+    file_type = mime.from_file(file_path)
+    print(file_type)
+
+    if file_type == "ASCII text" or file_type.startswith("PDF document") or "Unicode text" in file_type or "UTF-8 text" in file_type:
+        return 1
+    if file_type == "OpenDocument Spreadsheet" or file_type.startswith("Microsoft Excel"):
+        return 2
+    return 0
 
 
 # ********************************************************************************** #
@@ -244,10 +288,13 @@ def delete_doc(request, file_name):
 
     data = json_documenti()
     doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
+
+    # list of chunks to delete
     doc_ids = []
     for doc_info in doc_info_list:
         if doc_info["file_name"] == file_name:
             doc_ids.append(doc_info["doc_id"])
+
     for doc_id in doc_ids:
         api_url = HALFURL + 'ingest/'
         api_url = api_url + str(doc_id)
@@ -259,51 +306,100 @@ def delete_doc(request, file_name):
     return redirect('gestione:list_ingest')
 
 
-def already_exist(new_file_name):
-    data = json_documenti()
-    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
-    file_names = set(doc["file_name"] for doc in doc_info_list)
-    for file_name in file_names:
-        print(file_name)
-        if file_name == new_file_name:
-            return True
-    return False
-
-
-def upload(request):
-    if request.method == 'POST' and request.FILES.getlist('files'):
-        files = request.FILES.getlist('files')
-        for file in files:
-            if already_exist(file.name):
-                print(f'file {file.name} already exists')
-                # cosa vuoi fare ramon? sostituirlo o ignorarlo e andare avanti?
-                # in alternativa li vuoi tutti e due? genero un progressione v2, v3-.....
-            else:
-                pass
-                # controllo le estensioni del file
-            #else
-                # crea_file
-                # aggiungi_file
-                # aggiungo il file caricato alla lista di file cacariati per dare messggio di conf
-        return HttpResponse("Caricamento completato con successo.")
-    return render(request, 'gestione/upload.html')
-
-
-"""
 # --------------------------------------------------------------------- #
 # Funzione per ingestare un documento dato il path del documento
 # La funzione è utile per creare documenti e ingestarli senza passare
 # per la gui, quando una domanda viene approvata
 # --------------------------------------------------------------------- #
-def ingesta_file(file_path):
-    api_url = HALFURL + "/v1/ingest"
+def ingest_file(file_path):
+    api_url = HALFURL + "ingest"
     headers = {'Accept': 'application/json'}
     files = {'file': open(file_path, 'rb')}
     response = requests.post(api_url, headers=headers, files=files)
+    print(response.status_code)
     return response.status_code == 200
 
 
+# ----------------------------------------------------------------------- #
+# Function for update file, if file already exist, the admin can
+# if the file is already present, the admin can choose whether to replace
+# the old file or keep both
+# if the file format is not supported, an error message appears
+# otherwise the file is converted if necessary and ingested
+# ----------------------------------------------------------------------- #
+def upload(request):
+    if request.method == 'GET':
+        return render(request, template_name="gestione/upload.html")
 
+    if request.method == 'POST' and request.FILES.getlist('files'):
+        files = request.FILES.getlist('files')
+
+        # List of temporary file update from user
+        saved_file_path = []
+
+        # files split in 3 list, file ok. file not supported and file to modify before ingestion
+        files_ok = []
+        files_not_supported = []
+        files_to_modify = []
+
+        # List of file that already exists
+        files_already_exists = []
+
+        # list of ingested file at the end of procedure
+        ingested_file = []
+
+        temp_dir = tempfile.mktemp()
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+
+        try:
+            # Save the upload fine in a temporary directory
+            for file in files:
+                file_path = os.path.join(temp_dir, file.name)
+                with open(file_path, 'wb') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
+                saved_file_path.append(file_path)
+
+            # Check if this file is supported file or not
+            for file_path in saved_file_path:
+                if supported_format_file(file_path) == 0:
+                    files_not_supported.append(file_path)
+                elif supported_format_file(file_path) == 1:
+                    files_ok.append(file_path)
+                else:
+                    files_to_modify.append(file_path)
+
+            # Only for good file check if already exists
+            for file_ok in files_ok:
+                file_name = os.path.basename(file_ok)
+                if already_exist(file_name):
+                    files_already_exists.append(file_name)
+                    print(f'file {file_name} gia presente')
+                    # cosa vuoi fare ramon? sostituirlo o ignorarlo e andare avanti?
+                    # in alternativa li vuoi tutti e due? genero un progressione v2, v3-.....
+                    # os.rename("C:\\lezione20\\rinominami.txt", "file_rinominato.txt")
+                else:
+                    print("sono qua")
+                    if ingest_file(file_ok):
+                        print("ingestione avvenuta")
+                        ingested_file.append(file_ok)
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+        return HttpResponse("Caricamento completato con successo.")
+    return render(request, 'gestione/upload.html')
+
+
+
+
+
+
+
+
+
+
+"""
 def ingesta_documento(request):
     if request.method == 'GET':
         form = FileForm()
