@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <style>
+        .container {
+            width: 800px;  /* larghezza */
+            height: 200px;  /* altezza */
+            overflow-y: auto; /* barra di scorrimento verticale */
+        }
+        .table-container {
+            width: 100%; /* tabella con dim massima del container */
+        }
+    </style>
+    
+{% endblock %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+        <h3 style="color: cadetblue;">  Situazione Upload  </h3> <br>
+        
+        <div class="alert alert-success" role="alert"> File caricati con successo </div>
+        <div class="container">
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Nome Documento </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    {% for file in ingested_file %}
+                        <tbody>
+                            <tr>
+                                <th scope="row">{{forloop.counter0}}</th>
+                                <td> {{ file }} </td>
+                            </tr>
+                        </tbody>
+                    {% endfor %}
+                </table>    
+            </div>
+        </div>
+        <br>
+        <div class="alert alert-warning" role="alert">File gia presenti, Scegli cosa fare</div>
+        <div class="container">
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Nome Documento </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    {% for file in files_already_exists %}
+                        <tbody>
+                            <tr>
+                                <th scope="row">{{forloop.counter0}}</th>
+                                <td> {{ file }} </td>
+                            </tr>
+                        </tbody>
+                    {% endfor %}
+                </table>    
+            </div>
+        </div>
+        <br>
+    
+        <div class="alert alert-danger" role="alert">File non supportati </div>
+
+        <div class="container">
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Nome Documento </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    {% for file in files_not_supported %}
+                        <tbody>
+                            <tr>
+                                <th scope="row">{{forloop.counter0}}</th>
+                                <td> {{ file }} </td>
+                            </tr>
+                        </tbody>
+                    {% endfor %}
+                </table>    
+            </div>
+        </div>
+        <br>
+    
+    <a class="my_button" href="{% url 'home_login' %}"> Home</a> <br> <br>
+    </div>
+{% endblock %}

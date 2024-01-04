@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from gestione.models import *
 import time
@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import magic
 import requests
+from docx import Document
 # ************************************************************************ #
 #                      privateGPT server URL
 HALFURL = "http://10.1.1.109:8001/v1/"
@@ -139,22 +140,45 @@ def already_exist(new_file_name):
     return False
 
 
-# Function fot control il one file is on supported format, and if i need to preprocess it
+# ------------------------------------------------------------------------------------------ #
+# Function fot control il one file is on supported format, and if I need to preprocess it
 # this function return
 # 0 if the document is not supported
 # 1 if the document is supported (textual)
-# 2 if the document can be supported with some preprocess operation
+# 2 if the document is Word format, it can be supported but need some preprocess operations
+# 3 if the document is Excel format, it can be supported but need some preprocess operations
+# ------------------------------------------------------------------------------------------ #
 def supported_format_file(file_path):
     mime = magic.Magic()
     file_type = mime.from_file(file_path)
-    print(file_type)
 
     if file_type == "ASCII text" or file_type.startswith("PDF document") or "Unicode text" in file_type or "UTF-8 text" in file_type:
         return 1
-    if file_type == "OpenDocument Spreadsheet" or file_type.startswith("Microsoft Excel"):
+    if file_type == "OpenDocument Text" or file_type.startswith("Microsoft Word"):
         return 2
+    if file_type == "OpenDocument Spreadsheet" or file_type.startswith("Microsoft Excel"):
+        return 3
     return 0
 
+
+# ----------------------------------------------------------------------- #
+# Function for extract information from .docx file
+# This function take on input the path of word file and the directory
+# of that file. It returns a path of textual file, with the same name
+# of original file but .txt
+# ----------------------------------------------------------------------- #
+def convert_unsupported_word_file(file_path_source, dir_src):
+
+    document = Document(file_path_source)
+    extracted_text = ""
+    for paragraph in document.paragraphs:
+        extracted_text += paragraph.text + "\n"
+
+    original_file_name = os.path.basename(file_path_source)
+    with open(dir_src + "/" + original_file_name + ".txt", "w") as text_file:
+        text_file.write(extracted_text)
+
+    return text_file.name
 
 # ********************************************************************************** #
 # ********************************************************************************** #
@@ -367,7 +391,15 @@ def upload(request):
                     files_not_supported.append(file_path)
                 elif supported_format_file(file_path) == 1:
                     files_ok.append(file_path)
-                else:
+                # Word document
+                elif supported_format_file(file_path) == 2:
+                    files_to_modify.append(file_path)
+                    # Call the function for convert file in a textual file
+                    file_text = convert_unsupported_word_file(file_path, temp_dir)
+                    files_ok.append(file_text)
+                # Excel document
+                elif supported_format_file(file_path) == 3:
+                    # TODO qui chiamo la funzione di modifica ed estrazione del contenuto dal file
                     files_to_modify.append(file_path)
 
             # Only for good file check if already exists
@@ -376,18 +408,17 @@ def upload(request):
                 if already_exist(file_name):
                     files_already_exists.append(file_name)
                     print(f'file {file_name} gia presente')
-                    # cosa vuoi fare ramon? sostituirlo o ignorarlo e andare avanti?
-                    # in alternativa li vuoi tutti e due? genero un progressione v2, v3-.....
                     # os.rename("C:\\lezione20\\rinominami.txt", "file_rinominato.txt")
                 else:
-                    print("sono qua")
                     if ingest_file(file_ok):
-                        print("ingestione avvenuta")
                         ingested_file.append(file_ok)
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
+        ctx = {'ingested_file': ingested_file,
+               'files_already_exists': files_already_exists,
+               'files_not_supported': files_not_supported}
+        return render(request, template_name="gestione/situazione_upload.html", context=ctx)
 
-        return HttpResponse("Caricamento completato con successo.")
     return render(request, 'gestione/upload.html')
 
 

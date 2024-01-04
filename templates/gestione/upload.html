@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block head %}
+
+
+
+{% endblock %}
 
 {% block content %}
     <div style="text-align: center;">
@@ -12,5 +17,9 @@
             <input type="file" name="files" multiple>
             <input type="submit" value="Carica">
         </form>
+    </div>
+    
+    <div class="div-bassa-2">
+        <a class="my_button" href="{% url 'home_login' %}"> Home</a> <br> <br>
     </div>
 {% endblock %}
