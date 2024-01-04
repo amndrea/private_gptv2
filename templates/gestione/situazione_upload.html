@@ -11,6 +11,30 @@
         .table-container {
             width: 100%; /* tabella con dim massima del container */
         }
+        .red-button{
+            background-color: #B0171F;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .blue-button{
+            background-color: #1E90FF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .yellow-buton{
+            background-color: #FFB90F;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
     
 {% endblock %}
@@ -58,7 +82,12 @@
                         <tbody>
                             <tr>
                                 <th scope="row">{{forloop.counter0}}</th>
-                                <td> {{ file }} </td>
+                                <td> {{ file }}</td>
+                                <td>
+                                    {% if user.is_staff or 'expert_user' in user.groups.all.1.name  %}
+                                        <button class="red-button" onclick="removeRow({{forloop.counter0}})">Annulla</button>
+                                    {% endif %}
+                                </td>
                             </tr>
                         </tbody>
                     {% endfor %}

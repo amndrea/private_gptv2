@@ -8,6 +8,8 @@ import tempfile
 import magic
 import requests
 from docx import Document
+from odf import text, teletype
+from odf.opendocument import load
 # ************************************************************************ #
 #                      privateGPT server URL
 HALFURL = "http://10.1.1.109:8001/v1/"
@@ -153,12 +155,16 @@ def supported_format_file(file_path):
     file_type = mime.from_file(file_path)
 
     if file_type == "ASCII text" or file_type.startswith("PDF document") or "Unicode text" in file_type or "UTF-8 text" in file_type:
-        return 1
-    if file_type == "OpenDocument Text" or file_type.startswith("Microsoft Word"):
-        return 2
-    if file_type == "OpenDocument Spreadsheet" or file_type.startswith("Microsoft Excel"):
-        return 3
-    return 0
+        return 'text'
+    if file_type == "OpenDocument Text":
+        return 'opendocument'
+    if file_type.startswith("Microsoft Word"):
+        return 'word'
+    if file_type == "OpenDocument Spreadsheet":
+        return 'openspreadsheet'
+    if file_type.startswith("Microsoft Excel"):
+        return 'excel'
+    return '1'
 
 
 # ----------------------------------------------------------------------- #
@@ -167,12 +173,19 @@ def supported_format_file(file_path):
 # of that file. It returns a path of textual file, with the same name
 # of original file but .txt
 # ----------------------------------------------------------------------- #
-def convert_unsupported_word_file(file_path_source, dir_src):
-
-    document = Document(file_path_source)
-    extracted_text = ""
-    for paragraph in document.paragraphs:
-        extracted_text += paragraph.text + "\n"
+def convert_unsupported_word_file(file_path_source, dir_src, type):
+    if type == "word":
+        print("sono nella funzione di estrazione del testo di un file word")
+        document = Document(file_path_source)
+        extracted_text = ""
+        for paragraph in document.paragraphs:
+            extracted_text += paragraph.text + "\n"
+    else:
+        print("sono nella funzione di estrazione del testo di un file opendoc")
+        doc = load(file_path_source)
+        extracted_text = ""
+        for text_node in doc.getElementsByType(text.P):
+            extracted_text += teletype.extractText(text_node)
 
     original_file_name = os.path.basename(file_path_source)
     with open(dir_src + "/" + original_file_name + ".txt", "w") as text_file:
@@ -336,6 +349,8 @@ def delete_doc(request, file_name):
 # per la gui, quando una domanda viene approvata
 # --------------------------------------------------------------------- #
 def ingest_file(file_path):
+    print("sono nella funzione per ingestare un cesso di documento")
+    print(file_path)
     api_url = HALFURL + "ingest"
     headers = {'Accept': 'application/json'}
     files = {'file': open(file_path, 'rb')}
@@ -364,7 +379,6 @@ def upload(request):
         # files split in 3 list, file ok. file not supported and file to modify before ingestion
         files_ok = []
         files_not_supported = []
-        files_to_modify = []
 
         # List of file that already exists
         files_already_exists = []
@@ -387,21 +401,24 @@ def upload(request):
 
             # Check if this file is supported file or not
             for file_path in saved_file_path:
-                if supported_format_file(file_path) == 0:
+                if supported_format_file(file_path) == '1':
                     files_not_supported.append(file_path)
-                elif supported_format_file(file_path) == 1:
+                elif supported_format_file(file_path) == 'text':
                     files_ok.append(file_path)
-                # Word document
-                elif supported_format_file(file_path) == 2:
-                    files_to_modify.append(file_path)
-                    # Call the function for convert file in a textual file
-                    file_text = convert_unsupported_word_file(file_path, temp_dir)
+
+                elif supported_format_file(file_path) == 'opendocument':
+                    print("trovato formato opendocumetn")
+                    file_text = convert_unsupported_word_file(file_path, temp_dir,'open')
                     files_ok.append(file_text)
+                elif supported_format_file(file_path) == 'word':
+                    print("trovato formato word")
+                    file_text = convert_unsupported_word_file(file_path, temp_dir,'word')
+                    files_ok.append(file_text)
+
                 # Excel document
                 elif supported_format_file(file_path) == 3:
                     # TODO qui chiamo la funzione di modifica ed estrazione del contenuto dal file
-                    files_to_modify.append(file_path)
-
+                    print("trovato formato docx")
             # Only for good file check if already exists
             for file_ok in files_ok:
                 file_name = os.path.basename(file_ok)
@@ -410,6 +427,7 @@ def upload(request):
                     print(f'file {file_name} gia presente')
                     # os.rename("C:\\lezione20\\rinominami.txt", "file_rinominato.txt")
                 else:
+                    print("sono qua")
                     if ingest_file(file_ok):
                         ingested_file.append(file_ok)
         finally:
@@ -423,32 +441,28 @@ def upload(request):
 
 
 
-
-
-
-
-
+"""
+Chiama la funzione delete_document, poi chiama la funzione per rimuovere il nome del file dalla lista
+e basta
+"""
+def sostituisci(request, file_name):
+    pass
 
 
 """
-def ingesta_documento(request):
-    if request.method == 'GET':
-        form = FileForm()
-        return render(request, template_name="ingest/update_file.html", context={"form": form})
-    else:
-        form = FileForm(request.POST, request.FILES)
-        if form.is_valid():
-            istanza = form.save()
-            upload_file = request.FILES['file']
-
-            if documento_gia_ingestato(upload_file.name):
-                # @TODO render a una pagina di conferma_documento gia ingestato
-                pass
-            if ingesta_file(default_storage.path(istanza.file.name)):
-                return redirect('ingestion:success', 'ok')
-            else:
-                print("Errore nella richiesta POST. Dettagli:")
-                print(response.status_code)
-                print(response.text)
-                return redirect('ingestion:success', 'fallito')
+Prendo il nome del file, estraggo il contenuto a partire dalla fine fino al . (rimiovo anche il punto
+controllo che la nuova stringa non termina con v_e un numero
+se non termina così allora lo faccio io e 
+altrimenti rinomino il file con v_i+1 e 
+poi chiamo la funzione ingesta_file con il nuovo nome
+poi richiamo la funzione di sotto che toglie il nome dalla lista
 """
+def rinomina(request, file_name):
+    pass
+
+# Funzione che data una lista di nomi di file ed un file, rimuove il nome del file dalla lista e ritorna la lista
+def annulla(request):
+    pass
+
+
+

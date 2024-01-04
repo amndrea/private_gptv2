@@ -32,8 +32,13 @@
 - __magic__
 
         pip install python-magic
-  Library that allows you to determine the type of a file based on its contents
+  Library that allows you to determine the type of file based on its contents
 
+- __odfpy__ & __python-docx__
+        
+        pip install odfpy
+        pip install python-docx
+  Libraries for working with .odt and .docx files
 
 
 ## Starting the application ##
