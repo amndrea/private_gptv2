@@ -60,7 +60,15 @@ class DocRetrivalResponse(models.Model):
 # ------------------------------------------------------------------------------------------------ #
 #       Class that describes the ingest file model
 # ------------------------------------------------------------------------------------------------ #
+class IngestionSession(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+
+
 class IngestedFile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     file = models.FileField(upload_to='upload/')
+    file_name = models.CharField(max_length=100)
     date = models.DateTimeField(auto_now_add=True)
+    stato = models.CharField(max_length=50, default=' ')
+    ingestion_session = models.ForeignKey(IngestionSession, on_delete=models.CASCADE)
+

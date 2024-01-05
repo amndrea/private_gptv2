@@ -1,5 +1,10 @@
+import re
+
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.views.generic import DeleteView
+
 from gestione.models import *
 import time
 import os
@@ -10,9 +15,12 @@ import requests
 from docx import Document
 from odf import text, teletype
 from odf.opendocument import load
+
 # ************************************************************************ #
 #                      privateGPT server URL
 HALFURL = "http://10.1.1.109:8001/v1/"
+
+
 # ************************************************************************ #
 
 
@@ -154,7 +162,8 @@ def supported_format_file(file_path):
     mime = magic.Magic()
     file_type = mime.from_file(file_path)
 
-    if file_type == "ASCII text" or file_type.startswith("PDF document") or "Unicode text" in file_type or "UTF-8 text" in file_type:
+    if file_type == "ASCII text" or file_type.startswith(
+            "PDF document") or "Unicode text" in file_type or "UTF-8 text" in file_type:
         return 'text'
     if file_type == "OpenDocument Text":
         return 'opendocument'
@@ -175,13 +184,11 @@ def supported_format_file(file_path):
 # ----------------------------------------------------------------------- #
 def convert_unsupported_word_file(file_path_source, dir_src, type):
     if type == "word":
-        print("sono nella funzione di estrazione del testo di un file word")
         document = Document(file_path_source)
         extracted_text = ""
         for paragraph in document.paragraphs:
             extracted_text += paragraph.text + "\n"
     else:
-        print("sono nella funzione di estrazione del testo di un file opendoc")
         doc = load(file_path_source)
         extracted_text = ""
         for text_node in doc.getElementsByType(text.P):
@@ -192,6 +199,7 @@ def convert_unsupported_word_file(file_path_source, dir_src, type):
         text_file.write(extracted_text)
 
     return text_file.name
+
 
 # ********************************************************************************** #
 # ********************************************************************************** #
@@ -263,7 +271,6 @@ def completion(request):
 # -------------------------------------------------------------------------------- #
 @execution_time
 def chunks(request):
-
     # I show the user's last 5 messages in the template
     doc_request, doc_answers = doc_retrival_response_list(request.user)
     context = {"doc_requests": doc_request,
@@ -322,7 +329,6 @@ def ingest_list(request):
 # given a file name, this function delete all chunks of that file
 # ----------------------------------------------------------------------- #
 def delete_doc(request, file_name):
-
     data = json_documenti()
     doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
 
@@ -355,7 +361,6 @@ def ingest_file(file_path):
     headers = {'Accept': 'application/json'}
     files = {'file': open(file_path, 'rb')}
     response = requests.post(api_url, headers=headers, files=files)
-    print(response.status_code)
     return response.status_code == 200
 
 
@@ -379,13 +384,10 @@ def upload(request):
         # files split in 3 list, file ok. file not supported and file to modify before ingestion
         files_ok = []
         files_not_supported = []
-
-        # List of file that already exists
-        files_already_exists = []
-
-        # list of ingested file at the end of procedure
-        ingested_file = []
-
+        current_directory = os.getcwd()
+        print("Percorso della directory attuale:", current_directory)
+        dir = "/home/gcouser/PycharmProjects/interface_v2/file/"
+        os.makedirs(dir, exist_ok=True)
         temp_dir = tempfile.mktemp()
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
@@ -393,7 +395,7 @@ def upload(request):
         try:
             # Save the upload fine in a temporary directory
             for file in files:
-                file_path = os.path.join(temp_dir, file.name)
+                file_path = os.path.join(dir, file.name)
                 with open(file_path, 'wb') as destination:
                     for chunk in file.chunks():
                         destination.write(chunk)
@@ -408,61 +410,109 @@ def upload(request):
 
                 elif supported_format_file(file_path) == 'opendocument':
                     print("trovato formato opendocumetn")
-                    file_text = convert_unsupported_word_file(file_path, temp_dir,'open')
+                    file_text = convert_unsupported_word_file(file_path, dir, 'open')
                     files_ok.append(file_text)
                 elif supported_format_file(file_path) == 'word':
                     print("trovato formato word")
-                    file_text = convert_unsupported_word_file(file_path, temp_dir,'word')
+                    file_text = convert_unsupported_word_file(file_path, dir, 'word')
                     files_ok.append(file_text)
-
                 # Excel document
                 elif supported_format_file(file_path) == 3:
                     # TODO qui chiamo la funzione di modifica ed estrazione del contenuto dal file
                     print("trovato formato docx")
+
             # Only for good file check if already exists
+            session = IngestionSession()
+            session.save()
             for file_ok in files_ok:
+                ing_file = IngestedFile()
+                ing_file.user = request.user
+                ing_file.file = file_ok
+                ing_file.ingestion_session = session
+
                 file_name = os.path.basename(file_ok)
+                ing_file.file_name = file_name
                 if already_exist(file_name):
-                    files_already_exists.append(file_name)
-                    print(f'file {file_name} gia presente')
-                    # os.rename("C:\\lezione20\\rinominami.txt", "file_rinominato.txt")
+                    ing_file.stato = "already exists"
                 else:
-                    print("sono qua")
                     if ingest_file(file_ok):
-                        ingested_file.append(file_ok)
+                        ing_file.stato = "ok"
+                ing_file.save()
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
-        ctx = {'ingested_file': ingested_file,
-               'files_already_exists': files_already_exists,
-               'files_not_supported': files_not_supported}
-        return render(request, template_name="gestione/situazione_upload.html", context=ctx)
+        return redirect(reverse('gestione:check_upload', args=[session.pk, files_not_supported]))
 
     return render(request, 'gestione/upload.html')
 
+# ----------------------------------------------------------------------- #
+#            view which shows the result of an upload session
+# ----------------------------------------------------------------------- #
+def check_upload(request, session, file_not_supported):
+    print("sono tornato in check_upload")
+    ingestion_session = IngestionSession.objects.get(id=session)
+    ingested_file = IngestedFile.objects.filter(ingestion_session=ingestion_session).filter(stato='ok')
+    existing_file = IngestedFile.objects.filter(ingestion_session=session).filter(stato='already exists')
+
+    context = {'ingested_file': ingested_file,
+               'existing_file': existing_file,
+               'files_not_supported': file_not_supported}
+    return render(request, template_name='gestione/situazione_upload.html', context=context)
 
 
-"""
-Chiama la funzione delete_document, poi chiama la funzione per rimuovere il nome del file dalla lista
-e basta
-"""
-def sostituisci(request, file_name):
-    pass
+# ----------------------------------------------------------------------- #
+#            view which shows the result of an upload session
+# ----------------------------------------------------------------------- #
+class DeleteFileView(DeleteView):
+    model = IngestedFile
 
+    def get_object(self, queryset=None):
+        ingest_file = IngestedFile.objects.get(pk=self.kwargs.get('file_pk'))
+        return ingest_file
 
-"""
-Prendo il nome del file, estraggo il contenuto a partire dalla fine fino al . (rimiovo anche il punto
-controllo che la nuova stringa non termina con v_e un numero
-se non termina così allora lo faccio io e 
-altrimenti rinomino il file con v_i+1 e 
-poi chiamo la funzione ingesta_file con il nuovo nome
-poi richiamo la funzione di sotto che toglie il nome dalla lista
-"""
-def rinomina(request, file_name):
-    pass
+    def get_session(self):
+        session = IngestionSession.objects.get(pk=self.kwargs.get('session_pk'))
+        return session
 
-# Funzione che data una lista di nomi di file ed un file, rimuove il nome del file dalla lista e ritorna la lista
-def annulla(request):
-    pass
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['file'] = self.get_object()
+        return context
 
+    def get_success_url(self):
+        session = self.get_session()
+        return reverse('gestione:check_upload', kwargs={'session': session.pk, 'file_not_supported':[]})
 
+def edit_file_name(request, file_pk):
 
+    file = IngestedFile.objects.get(pk=file_pk)
+    ok_pattern = False
+    while not ok_pattern:
+        file_name, file_extension = os.path.splitext(file.file_name)
+        print("iniziato il while")
+        print(file_name)
+        version_pattern = re.compile(r'v_\d+$')
+        if version_pattern.search(file_name):
+            print("sono nell'if della version")
+            current_version = int(file_name.split('_')[-1][1:])
+            new_version = current_version + 1
+            new_file_name = f'{file_name[:-len(str(current_version))] + str(new_version)}{file_extension}'
+        else:
+            new_file_name = f'{file_name}_v_1{file_extension}'
+        new_file_path = os.path.join(os.path.dirname(file.file.path), new_file_name)
+        print(new_file_path)
+        file_path = str(file.file)
+        print(file_path)
+        file_path = file_path.replace('//','/')
+        print(file_path)
+        os.rename(file_path, new_file_path)
+        if not already_exist(new_file_name):
+            print("sono qua")
+            ingest_file(new_file_path)
+            file.stato = 'ok'
+            file.save()
+            print("file non esisteva con questo nome, ingestaton")
+            ok_pattern = True
+            print("funzione_finita, faccio il reverse")
+            print(file.ingestion_session.pk)
+            file_not_supported = []
+            return redirect(reverse('gestione:check_upload', args=[file.ingestion_session.pk, file_not_supported]))

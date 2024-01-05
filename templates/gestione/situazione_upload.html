@@ -27,7 +27,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        .yellow-buton{
+        .yellow-button{
             background-color: #FFB90F;
             color: white;
             padding: 10px 20px;
@@ -36,14 +36,14 @@
             cursor: pointer;
         }
     </style>
-    
+
 {% endblock %}
 
 {% block content %}
     <div style="text-align: center;">
         <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
         <h3 style="color: cadetblue;">  Situazione Upload  </h3> <br>
-        
+
         <div class="alert alert-success" role="alert"> File caricati con successo </div>
         <div class="container">
             <div class="table-container">
@@ -59,11 +59,11 @@
                         <tbody>
                             <tr>
                                 <th scope="row">{{forloop.counter0}}</th>
-                                <td> {{ file }} </td>
+                                <td> {{ file.file_name }} </td>
                             </tr>
                         </tbody>
                     {% endfor %}
-                </table>    
+                </table>
             </div>
         </div>
         <br>
@@ -76,26 +76,55 @@
                             <th scope="col">#</th>
                             <th scope="col">Nome Documento </th>
                             <th></th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
-                    {% for file in files_already_exists %}
+                    {% for file in existing_file %}
                         <tbody>
                             <tr>
                                 <th scope="row">{{forloop.counter0}}</th>
-                                <td> {{ file }}</td>
+                                <td> {{ file.file_name }}</td>
                                 <td>
                                     {% if user.is_staff or 'expert_user' in user.groups.all.1.name  %}
-                                        <button class="red-button" onclick="removeRow({{forloop.counter0}})">Annulla</button>
+                                        <form method="POST" action="{% url 'gestione:cancel_doc' file.pk file.ingestion_session.pk %}">
+                                            {% csrf_token %}
+                                            <button class="yellow-button" type="submit" onclick="confirmDelete()">Annulla</button>
+                                            <script>
+                                                function confirmDelete() {
+                                                    // Mostra una finestra di dialogo di conferma
+                                                    var isConfirmed = confirm("Sei sicuro di voler eliminare questo documento?");
+                                            
+                                                    // Se l'utente conferma, invia il modulo
+                                                    if (isConfirmed) {
+                                                        document.getElementById("deleteForm").submit();
+                                                    }
+                                                }
+                                        </script>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_staff or 'expert_user' in user.groups.all.1.name  %}
+                                        <form method="POST" action="{% url 'gestione:edit_file_name' file.pk %}">
+                                            {% csrf_token %}
+                                            <button class="blue-button" type="submit">Mantieni Entrambi</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_staff  %}
+                                        <button class="red-button" data-file="{{ file }}">Sostituisci</button>
                                     {% endif %}
                                 </td>
                             </tr>
                         </tbody>
                     {% endfor %}
-                </table>    
+                </table>
             </div>
         </div>
         <br>
-    
+
         <div class="alert alert-danger" role="alert">File non supportati </div>
 
         <div class="container">
@@ -109,18 +138,21 @@
                         </tr>
                     </thead>
                     {% for file in files_not_supported %}
-                        <tbody>
+                        {% if file != '[' and file != ']'%}
+                            <tbody>
                             <tr>
                                 <th scope="row">{{forloop.counter0}}</th>
                                 <td> {{ file }} </td>
                             </tr>
                         </tbody>
+                        {% endif %}
+
                     {% endfor %}
-                </table>    
+                </table>
             </div>
         </div>
         <br>
-    
+
     <a class="my_button" href="{% url 'home_login' %}"> Home</a> <br> <br>
     </div>
 {% endblock %}
