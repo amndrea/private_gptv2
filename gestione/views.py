@@ -493,6 +493,117 @@ def edit_file_name(request, file_pk):
             file_not_supported = []
             return redirect(reverse('gestione:check_upload', args=[file.ingestion_session.pk, file_not_supported]))
 
-
+# TODO replace del file, prima elimino il vecchio file chiamando la f delete con il file_name del file, poi chiamo l'ingestion
 def replace_file(request, file_pk):
     pass
+
+
+"""
+
+# ----------------------------------------------------------------------------------------#
+# View associata ai pulsanti like/dislike nella chat per mandare la domanda all'admin
+# ----------------------------------------------------------------------------------------#
+def CreaDomanda(request, messaggio_pk, soddisfatto):
+    messaggio = Messaggio.objects.get(pk=messaggio_pk)
+    soddisfatto = soddisfatto
+    context = {'messaggio': messaggio, 'soddisfatto': soddisfatto}
+
+    # Controllo che non sia gia stata segnalata 
+    gia_segnalata = Domanda.objects.filter(messaggio=messaggio).exists()
+    if gia_segnalata:
+        return render(request, "thx.html", {'ok': 0})
+
+    # Se la richiesta è di tipo post è perchè ho inviato il form
+    if request.method == 'POST':
+        form = InserisciDomandaForm(request.POST)
+
+        # Se il form è valido creo e inserisco nel db la domanda
+        if form.is_valid():
+            domanda = Domanda()
+            domanda.messaggio = messaggio
+            domanda.soddisfatto = soddisfatto
+            domanda.stato = 0
+            domanda.visualizzato = False
+            domanda.commento = form.cleaned_data['commento']
+            domanda.save()
+            return render(request, 'thx.html', {'ok': 1})
+
+    else:
+        form = InserisciDomandaForm()
+        context['form'] = form
+        return render(request, template_name='ingest/crea_domanda.html', context=context)
+
+
+# ------------------------------------------------------------------#
+# View dove l'admin decide che domande visualizzare per la 
+# revisione 
+# ------------------------------------------------------------------#
+@user_passes_test(isAdmin)
+def mostra_opzioni_revisione(request):
+    return render(request, template_name="ingest/lista.html")
+
+
+# ----------------------------------------------------------------------------------------#
+# View per mostrare tutte le domande in attesa di approvazione
+# ----------------------------------------------------------------------------------------#
+class ListaDomande(PermissionRequiredMixin, ListView):
+    permission_required = "is_staff"
+    template_name = "ingest/lista_domande.html"
+    model = Domanda
+
+    # template_object_name = "domande"
+
+    # Queryset per decidere cosa visualizzare nel template
+    def get_queryset(self):
+        cosa_visualizzare = self.kwargs.get('cosa')
+
+        # Domande ancora non visualizzate
+        if cosa_visualizzare == 'non_visualizzate':
+            queryset = Domanda.objects.filter(visualizzato=0).order_by('-messaggio__data')
+        # Domande gia visualizzate e ancora non approvate  
+        elif cosa_visualizzare == 'visualizzate_da_approvare':
+            queryset = Domanda.objects.filter(visualizzato=1).filter(stato=0).order_by('-messaggio__data')
+        # Domande gia approvate
+        elif cosa_visualizzare == 'approvate':
+            queryset = Domanda.objects.filter(stato=1).order_by('-messaggio__data')
+        # Domande non approvate
+        else:
+            queryset = Domanda.objects.filter(stato=2).order_by('-messaggio__data')
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['cosa'] = self.kwargs.get('cosa')
+        context['domande'] = self.get_queryset()
+        return context
+
+
+def visualizza_domanda(request, domanda_pk, stato=0):
+    domanda = Domanda.objects.get(pk=domanda_pk)
+    if request.method == 'GET':
+        context = {}
+        # La domanda passa in stato visualizzato
+        if domanda.visualizzato == False:
+            domanda.visualizzato = True
+            domanda.save()
+        context['visualizzato'] = '1'
+        context['domanda'] = domanda
+        context['messaggio'] = Messaggio.objects.get(pk=domanda.messaggio.pk)
+        return render(request, template_name="ingest/visualizza_domanda.html", context=context)
+
+    # Se qui ci arrivo da una post è perche ai pulsanti ho legato un metodo POST che modifica lo
+    # stato della domananda, approvandola o rifiutandola
+    else:
+        # @TODO devo salvare il file da ingestare
+        # Se lo stato è uguale a 1 creo un nuovo documento con la coppia domanda_risposta e lo ingesto
+        if stato == 1:
+            pass
+        else:
+            # La domanda passa in stato non approvato
+            domanda.stato = 2
+            domanda.save()
+            # Rendero su un template dove visualizzo un messaggio di ok e ritorno alla lista di domande
+            return render(request, template_name="ingest/end_revisione.html")
+"""
+
