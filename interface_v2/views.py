@@ -83,8 +83,6 @@ class UserEditPassword(LoginRequiredMixin, FormView):
         user = form.save(commit=False)
         new_password1 = form.cleaned_data.get("new_password1")
         new_password2 = form.cleaned_data.get("new_password2")
-        print(new_password1)
-        print(new_password2)
         if new_password1 == new_password2:
             user.set_password(form.cleaned_data['new_password1'])
             user.save()

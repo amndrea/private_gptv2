@@ -15,7 +15,7 @@ urlpatterns = [
     path('check_upload/<int:session>/<file_not_supported>/', check_upload, name="check_upload"),
 
     # URl for delete a doc that already exists, not an ingested Doc
-    path('cancel_doc/<int:file_pk>/<int:session_pk>/', DeleteFileView.as_view(), name="cancel_doc"),
+    path('cancel_doc/<int:file_pk>/<int:session_pk>/', cancel_file_object, name="cancel_doc"),
 
     # URl for modify the name of file and ingest it again if file already exists
     path('edit_file_name/<int:file_pk>/', edit_file_name, name="edit_file_name"),

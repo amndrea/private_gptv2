@@ -1,15 +1,10 @@
 import re
-
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views.generic import DeleteView
-
 from gestione.models import *
 import time
 import os
-import shutil
-import tempfile
 import magic
 import requests
 from docx import Document
@@ -19,8 +14,6 @@ from odf.opendocument import load
 # ************************************************************************ #
 #                      privateGPT server URL
 HALFURL = "http://10.1.1.109:8001/v1/"
-
-
 # ************************************************************************ #
 
 
@@ -195,9 +188,8 @@ def convert_unsupported_word_file(file_path_source, dir_src, type):
             extracted_text += teletype.extractText(text_node)
 
     original_file_name = os.path.basename(file_path_source)
-    with open(dir_src + "/" + original_file_name + ".txt", "w") as text_file:
+    with open(dir_src + original_file_name + ".txt", "w") as text_file:
         text_file.write(extracted_text)
-
     return text_file.name
 
 
@@ -355,8 +347,6 @@ def delete_doc(request, file_name):
 # per la gui, quando una domanda viene approvata
 # --------------------------------------------------------------------- #
 def ingest_file(file_path):
-    print("sono nella funzione per ingestare un cesso di documento")
-    print(file_path)
     api_url = HALFURL + "ingest"
     headers = {'Accept': 'application/json'}
     files = {'file': open(file_path, 'rb')}
@@ -384,13 +374,8 @@ def upload(request):
         # files split in 3 list, file ok. file not supported and file to modify before ingestion
         files_ok = []
         files_not_supported = []
-        current_directory = os.getcwd()
-        print("Percorso della directory attuale:", current_directory)
-        dir = "/home/gcouser/PycharmProjects/interface_v2/file/"
+        dir = os.getcwd()+"/file/"
         os.makedirs(dir, exist_ok=True)
-        temp_dir = tempfile.mktemp()
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
 
         try:
             # Save the upload fine in a temporary directory
@@ -409,13 +394,13 @@ def upload(request):
                     files_ok.append(file_path)
 
                 elif supported_format_file(file_path) == 'opendocument':
-                    print("trovato formato opendocumetn")
                     file_text = convert_unsupported_word_file(file_path, dir, 'open')
                     files_ok.append(file_text)
                 elif supported_format_file(file_path) == 'word':
-                    print("trovato formato word")
                     file_text = convert_unsupported_word_file(file_path, dir, 'word')
                     files_ok.append(file_text)
+
+                #TODO da implementare questa roba
                 # Excel document
                 elif supported_format_file(file_path) == 3:
                     # TODO qui chiamo la funzione di modifica ed estrazione del contenuto dal file
@@ -430,16 +415,18 @@ def upload(request):
                 ing_file.file = file_ok
                 ing_file.ingestion_session = session
 
-                file_name = os.path.basename(file_ok)
-                ing_file.file_name = file_name
-                if already_exist(file_name):
+                ing_file.file_name = os.path.basename(file_ok)
+                if already_exist(ing_file.file_name):
                     ing_file.stato = "already exists"
                 else:
                     if ingest_file(file_ok):
                         ing_file.stato = "ok"
                 ing_file.save()
         finally:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+
+            file_ingested = IngestedFile.objects.filter(ingestion_session=session).filter(stato='ok')
+            for file in file_ingested:
+                os.remove(str(file.file))
         return redirect(reverse('gestione:check_upload', args=[session.pk, files_not_supported]))
 
     return render(request, 'gestione/upload.html')
@@ -448,7 +435,6 @@ def upload(request):
 #            view which shows the result of an upload session
 # ----------------------------------------------------------------------- #
 def check_upload(request, session, file_not_supported):
-    print("sono tornato in check_upload")
     ingestion_session = IngestionSession.objects.get(id=session)
     ingested_file = IngestedFile.objects.filter(ingestion_session=ingestion_session).filter(stato='ok')
     existing_file = IngestedFile.objects.filter(ingestion_session=session).filter(stato='already exists')
@@ -460,59 +446,50 @@ def check_upload(request, session, file_not_supported):
 
 
 # ----------------------------------------------------------------------- #
-#            view which shows the result of an upload session
+# View for delete an ingested document object in a session, not an
+# ingested document in PrivateGPT
 # ----------------------------------------------------------------------- #
-class DeleteFileView(DeleteView):
-    model = IngestedFile
+def cancel_file_object(request, file_pk, session_pk):
+    ingested_file = IngestedFile.objects.get(pk=file_pk)
+    file_path = str(ingested_file.file)
+    os.remove(file_path)
+    ingested_file.delete()
+    return redirect('gestione:check_upload', session=session_pk, file_not_supported=[])
 
-    def get_object(self, queryset=None):
-        ingest_file = IngestedFile.objects.get(pk=self.kwargs.get('file_pk'))
-        return ingest_file
 
-    def get_session(self):
-        session = IngestionSession.objects.get(pk=self.kwargs.get('session_pk'))
-        return session
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['file'] = self.get_object()
-        return context
-
-    def get_success_url(self):
-        session = self.get_session()
-        return reverse('gestione:check_upload', kwargs={'session': session.pk, 'file_not_supported':[]})
-
+# -------------------------------------------------------------------------------------------- #
+#
+# -------------------------------------------------------------------------------------------- #
 def edit_file_name(request, file_pk):
 
     file = IngestedFile.objects.get(pk=file_pk)
     ok_pattern = False
     while not ok_pattern:
         file_name, file_extension = os.path.splitext(file.file_name)
-        print("iniziato il while")
-        print(file_name)
+
         version_pattern = re.compile(r'v_\d+$')
+
         if version_pattern.search(file_name):
-            print("sono nell'if della version")
-            current_version = int(file_name.split('_')[-1][1:])
+            current_version = file_name.split('_')[-1]
+            current_version = int(current_version)
             new_version = current_version + 1
             new_file_name = f'{file_name[:-len(str(current_version))] + str(new_version)}{file_extension}'
         else:
             new_file_name = f'{file_name}_v_1{file_extension}'
-        new_file_path = os.path.join(os.path.dirname(file.file.path), new_file_name)
-        print(new_file_path)
-        file_path = str(file.file)
-        print(file_path)
-        file_path = file_path.replace('//','/')
-        print(file_path)
-        os.rename(file_path, new_file_path)
+
+        file.file_name = new_file_name
+        file.save()
         if not already_exist(new_file_name):
-            print("sono qua")
-            ingest_file(new_file_path)
+            file_path = str(file.file)
+            dir_name = os.path.dirname(str(file.file))
+            new_file_name = str(dir_name)+"/"+str(file.file_name)
+            os.rename(file_path,new_file_name)
+            file.file = new_file_name
+            ingest_file(str(file.file))
             file.stato = 'ok'
             file.save()
-            print("file non esisteva con questo nome, ingestaton")
-            ok_pattern = True
-            print("funzione_finita, faccio il reverse")
-            print(file.ingestion_session.pk)
+            os.remove(str(file.file))
+
             file_not_supported = []
             return redirect(reverse('gestione:check_upload', args=[file.ingestion_session.pk, file_not_supported]))
+
