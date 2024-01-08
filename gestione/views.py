@@ -94,10 +94,10 @@ def create_doc_retrival_request(user_request, user):
     return doc_retrival_request
 
 
-def create_doc_retrival_response(doc_retrival_request, text, score, file_name, doc_id):
+def create_doc_retrival_response(doc_retrival_request, texts, score, file_name, doc_id):
     doc_retrival_response = DocRetrivalResponse()
     doc_retrival_response.doc_request = doc_retrival_request
-    doc_retrival_response.text = text
+    doc_retrival_response.text = texts
     doc_retrival_response.score = score
     doc_retrival_response.file_name = file_name
     doc_retrival_response.doc_id = doc_id
@@ -175,8 +175,8 @@ def supported_format_file(file_path):
 # of that file. It returns a path of textual file, with the same name
 # of original file but .txt
 # ----------------------------------------------------------------------- #
-def convert_unsupported_word_file(file_path_source, dir_src, type):
-    if type == "word":
+def convert_unsupported_word_file(file_path_source, dir_src, types):
+    if types == "word":
         document = Document(file_path_source)
         extracted_text = ""
         for paragraph in document.paragraphs:
@@ -290,12 +290,12 @@ def chunks(request):
             doc_request = create_doc_retrival_request(user_request, request.user)
             count = 0
             for choice in result["data"]:
-                text = choice["text"]
+                texts = choice["text"]
                 score = choice["score"]
                 file_name = choice['document']['doc_metadata']['file_name']
                 doc_id = choice['document']['doc_metadata']['doc_id']
 
-                create_doc_retrival_response(doc_request, text, score, file_name, doc_id)
+                create_doc_retrival_response(doc_request, texts, score, file_name, doc_id)
                 count = count + 1
                 if count == 5:
                     break
@@ -400,8 +400,8 @@ def upload(request):
                     file_text = convert_unsupported_word_file(file_path, dir, 'word')
                     files_ok.append(file_text)
 
-                #TODO da implementare questa roba
-                # Excel document
+                # TODO da implementare questa roba
+                #  Excel document
                 elif supported_format_file(file_path) == 3:
                     # TODO qui chiamo la funzione di modifica ed estrazione del contenuto dal file
                     print("trovato formato docx")
@@ -423,13 +423,13 @@ def upload(request):
                         ing_file.stato = "ok"
                 ing_file.save()
         finally:
-
             file_ingested = IngestedFile.objects.filter(ingestion_session=session).filter(stato='ok')
             for file in file_ingested:
                 os.remove(str(file.file))
         return redirect(reverse('gestione:check_upload', args=[session.pk, files_not_supported]))
 
     return render(request, 'gestione/upload.html')
+
 
 # ----------------------------------------------------------------------- #
 #            view which shows the result of an upload session
@@ -483,7 +483,7 @@ def edit_file_name(request, file_pk):
             file_path = str(file.file)
             dir_name = os.path.dirname(str(file.file))
             new_file_name = str(dir_name)+"/"+str(file.file_name)
-            os.rename(file_path,new_file_name)
+            os.rename(file_path, new_file_name)
             file.file = new_file_name
             ingest_file(str(file.file))
             file.stato = 'ok'
@@ -493,3 +493,6 @@ def edit_file_name(request, file_pk):
             file_not_supported = []
             return redirect(reverse('gestione:check_upload', args=[file.ingestion_session.pk, file_not_supported]))
 
+
+def replace_file(request, file_pk):
+    pass
