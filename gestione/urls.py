@@ -39,4 +39,11 @@ urlpatterns = [
     # URL for create a question for admin for revision
     path('create_question/<int:answer_pk>/<int:satisfied>/', create_question, name="create_question"),
 
+    # URL for show all question by one type
+    path('list_question/',QuestionList.as_view(), name="list_question"),
+
+
+    # URL al quale l'admin visualizza una risposta nello specifico e decide se approvarla o no
+    #path('visualizza_domanda/<int:domanda_pk>/<int:stato>/', visualizza_domanda, name="visualizza_domanda"),
+
 ]

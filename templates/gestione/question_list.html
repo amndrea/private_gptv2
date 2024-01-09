@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Data</th>
+                    <th scope="col">Utente</th>
+                    <th scope="col">Nome File </th>
+                    <th scope="col">Domanda</th>
+                    <th scope="col">Risposta</th>
+                </tr>
+            </thead>
+            {% for question in questions %}
+                <tbody>
+                    <tr>
+                        <th scope="row">{{forloop.counter0}}</th>
+                        <td>{{ question.answer.data }}</td>
+                        <td>{{ question.answer.user.username }}</td>
+                        <td>{{ question.answer.file_name }}</td>
+                        <td> {{ question.answer.user_request|slice:":25" }} </td>
+                        <td> {{ question.answer.answer|slice:":25" }} </td>
+                        <td>
+                            <form method="GET" action="{% url ':visualizza_domanda' question_pk=question.pk state=0 %}">
+                                {% csrf_token %}
+                                <button type="submit" class="my_button">Visualizza</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            {% endfor%}
+        </table>
+    </div>
+{% endblock %}

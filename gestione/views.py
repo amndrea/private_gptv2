@@ -1,6 +1,9 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.views.generic import ListView
+
 from gestione.models import *
 from .forms import InsertQuestionForm
 from docx import Document
@@ -550,53 +553,41 @@ def create_question(request, answer_pk, satisfied):
         return render(request, template_name='gestione/crea_domanda.html', context=context)
 
 
-"""
-
-# ------------------------------------------------------------------#
-# View dove l'admin decide che domande visualizzare per la 
-# revisione 
-# ------------------------------------------------------------------#
-@user_passes_test(isAdmin)
-def mostra_opzioni_revisione(request):
-    return render(request, template_name="ingest/lista.html")
-
 
 # ----------------------------------------------------------------------------------------#
 # View per mostrare tutte le domande in attesa di approvazione
 # ----------------------------------------------------------------------------------------#
-class ListaDomande(PermissionRequiredMixin, ListView):
+class QuestionList(PermissionRequiredMixin, ListView):
     permission_required = "is_staff"
-    template_name = "ingest/lista_domande.html"
-    model = Domanda
-
-    # template_object_name = "domande"
+    template_name = "gestione/question_list.html"
+    model = Question
 
     # Queryset per decidere cosa visualizzare nel template
     def get_queryset(self):
-        cosa_visualizzare = self.kwargs.get('cosa')
+        what_to_view = self.kwargs.get('what')
 
         # Domande ancora non visualizzate
-        if cosa_visualizzare == 'non_visualizzate':
-            queryset = Domanda.objects.filter(visualizzato=0).order_by('-messaggio__data')
+        if what_to_view == 'not_displayed':
+            queryset = Question.objects.filter(displayed=0).order_by('-answer__data')
         # Domande gia visualizzate e ancora non approvate  
-        elif cosa_visualizzare == 'visualizzate_da_approvare':
-            queryset = Domanda.objects.filter(visualizzato=1).filter(stato=0).order_by('-messaggio__data')
+        elif what_to_view == 'displayed_to_be_approved':
+            queryset = Question.objects.filter(displayed=1).filter(state=0).order_by('-messaggio__data')
         # Domande gia approvate
-        elif cosa_visualizzare == 'approvate':
-            queryset = Domanda.objects.filter(stato=1).order_by('-messaggio__data')
+        elif what_to_view == 'approved':
+            queryset = Question.objects.filter(state=1).order_by('-messaggio__data')
         # Domande non approvate
         else:
-            queryset = Domanda.objects.filter(stato=2).order_by('-messaggio__data')
+            queryset = Question.objects.filter(state=2).order_by('-messaggio__data')
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        context['cosa'] = self.kwargs.get('cosa')
-        context['domande'] = self.get_queryset()
+        context['what'] = self.kwargs.get('what')
+        context['questions'] = self.get_queryset()
         return context
 
-
+"""
 def visualizza_domanda(request, domanda_pk, stato=0):
     domanda = Domanda.objects.get(pk=domanda_pk)
     if request.method == 'GET':
