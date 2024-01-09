@@ -193,6 +193,25 @@ def convert_unsupported_word_file(file_path_source, dir_src, types):
     return text_file.name
 
 
+def delete_document(file_name):
+    data = json_documenti()
+    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
+
+    # list of chunks to delete
+    doc_ids = []
+    for doc_info in doc_info_list:
+        if doc_info["file_name"] == file_name:
+            doc_ids.append(doc_info["doc_id"])
+
+    for doc_id in doc_ids:
+        api_url = HALFURL + 'ingest/'
+        api_url = api_url + str(doc_id)
+        headers = {'Accept': 'application/json'}
+
+        response = requests.delete(api_url, headers=headers)
+        if response.status_code != 200:
+            print("error during delete request")
+
 # ********************************************************************************** #
 # ********************************************************************************** #
 #                                API FOR PRIVATEGPT
@@ -320,6 +339,13 @@ def ingest_list(request):
 # Function for delete an ingested document from the name of file
 # given a file name, this function delete all chunks of that file
 # ----------------------------------------------------------------------- #
+
+
+def delete_document_view(request, file_name):
+    delete_document(file_name)
+    return redirect('gestione:list_ingest')
+
+"""
 def delete_doc(request, file_name):
     data = json_documenti()
     doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
@@ -338,9 +364,10 @@ def delete_doc(request, file_name):
         response = requests.delete(api_url, headers=headers)
         if response.status_code != 200:
             print("error during delete request")
+    
     return redirect('gestione:list_ingest')
-
-
+   
+"""
 # --------------------------------------------------------------------- #
 # Funzione per ingestare un documento dato il path del documento
 # La funzione è utile per creare documenti e ingestarli senza passare
@@ -493,11 +520,20 @@ def edit_file_name(request, file_pk):
             file_not_supported = []
             return redirect(reverse('gestione:check_upload', args=[file.ingestion_session.pk, file_not_supported]))
 
-# TODO replace del file, prima elimino il vecchio file chiamando la f delete con il file_name del file, poi chiamo l'ingestion
+
 def replace_file(request, file_pk):
-    pass
+    ingested_file = IngestedFile.objects.get(pk=file_pk)
+    file_name = ingested_file.file_name
 
-
+    delete_document(file_name)
+    if ingest_file(str(ingested_file.file)):
+        ingested_file.stato='ok'
+        ingested_file.save()
+        os.remove(str(ingested_file.file))
+        file_not_supported = []
+        return redirect(reverse('gestione:check_upload', args=[ingested_file.ingestion_session.pk, file_not_supported ]))
+    else:
+        print("non è andata molto bene nella reingestione del documento")
 """
 
 # ----------------------------------------------------------------------------------------#

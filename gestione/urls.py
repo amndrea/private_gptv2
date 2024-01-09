@@ -28,7 +28,7 @@ urlpatterns = [
     path('list_ingest/', ingest_list, name="list_ingest"),
 
     # URL for delete a ingested document
-    path('delete_doc/<str:file_name>/', delete_doc, name="delete_doc"),
+    path('delete_doc/<str:file_name>/', delete_document_view, name="delete_doc"),
 
     # URL for completion retrival
     path('completion/', completion, name="completion"),

@@ -47,7 +47,7 @@
         
                                 <td>
                                     {% if user.is_staff or 'expert_user' in user.groups.all.1.name  %}
-                                        <form method="POST" action="{% url 'gestione:delete_doc' documento  %}"> 
+                                        <form method="POST" action="{% url 'gestione:delete_doc' documento  %}">
                                             {% csrf_token %}
                                             <button class="red-button" type="submit" onclick="confirmDelete()">Elimina</button>
                                         </form>

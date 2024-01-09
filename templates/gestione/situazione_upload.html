@@ -114,7 +114,21 @@
                                 </td>
                                 <td>
                                     {% if user.is_staff  %}
-                                        <button class="red-button" data-file="{{ file }}">Sostituisci</button>
+                                        <form method="POST" action="{% url 'gestione:replace_file' file.pk%}">
+                                            {% csrf_token %}
+                                            <button class="red-button" type="submit" onclick="confirmDelete()">Sostituisci</button>
+                                            <script>
+                                                function confirmDelete() {
+                                                    // Mostra una finestra di dialogo di conferma
+                                                    var isConfirmed = confirm("Sei sicuro di voler eliminare questo documento?");
+                                            
+                                                    // Se l'utente conferma, invia il modulo
+                                                    if (isConfirmed) {
+                                                        document.getElementById("deleteForm").submit();
+                                                    }
+                                                }
+                                            </script>
+                                        </form>
                                     {% endif %}
                                 </td>
                             </tr>
