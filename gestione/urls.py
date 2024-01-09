@@ -36,4 +36,7 @@ urlpatterns = [
     # URL for chunks retrival
     path('chunks/', chunks, name="chunks"),
 
+    # URL for create a question for admin for revision
+    path('create_question/<int:answer_pk>/<int:satisfied>/', create_question, name="create_question"),
+
 ]

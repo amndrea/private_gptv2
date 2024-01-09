@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{%block head%}
+{%endblock%}
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+
+        {% if ok == 0%}
+            <div class="alert alert-danger" role="alert">
+                Hai gia richiesto la revisione di questa risposta
+            </div> <br><br>
+          
+        {%else %}
+            <div class="alert alert-success" role="alert">
+                Grazie per la segnalazione
+            </div> <br><br>
+        {%endif %}
+        <a href="{% url 'gestione:completion'%}" class="my_button"> Indietro </a><br> <br>
+
+    </div>
+
+{% endblock %}

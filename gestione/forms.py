@@ -1,22 +1,21 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from .models import *
 
-"""
-class InserisciDomandaForm(forms.ModelForm):
+class InsertQuestionForm(forms.ModelForm):
     helper = FormHelper()
-    helper.form_id = "insert_dieta_crispy_form"
+    helper.form_id = "insert_question_form"
     helper.form_method = "POST"
     helper.add_input(Submit('submit', 'submit'))
 
     class Meta:
-        model = Domanda
-        fields = ['commento']
+        model = Question
+        fields = ['comment']
         widgets = {
-            'commento': forms.Textarea(attrs={'class': 'my-custom-textarea'}),
+            'comment': forms.Textarea(attrs={'class': 'my-custom-textarea'}),
         }
 
     def clean(self):
         cleaned_data = super().clean()
         return cleaned_data
-"""

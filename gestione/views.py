@@ -1,15 +1,18 @@
-import re
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from gestione.models import *
-import time
-import os
-import magic
-import requests
+from .forms import InsertQuestionForm
 from docx import Document
 from odf import text, teletype
 from odf.opendocument import load
+
+import time
+import os
+import magic
+import re
+import requests
+
 
 # ************************************************************************ #
 #                      privateGPT server URL
@@ -193,6 +196,10 @@ def convert_unsupported_word_file(file_path_source, dir_src, types):
     return text_file.name
 
 
+# ------------------------------------------------------------------------------------------ #
+# Function that, given the name of a file, deletes all the chunks of that file
+# from the ingested documents
+# ------------------------------------------------------------------------------------------ #
 def delete_document(file_name):
     data = json_documenti()
     doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
@@ -211,6 +218,19 @@ def delete_document(file_name):
         response = requests.delete(api_url, headers=headers)
         if response.status_code != 200:
             print("error during delete request")
+
+
+# --------------------------------------------------------------------- #
+# Funzione per ingestare un documento dato il path del documento
+# La funzione è utile per creare documenti e ingestarli senza passare
+# per la gui, quando una domanda viene approvata
+# --------------------------------------------------------------------- #
+def ingest_file(file_path):
+    api_url = HALFURL + "ingest"
+    headers = {'Accept': 'application/json'}
+    files = {'file': open(file_path, 'rb')}
+    response = requests.post(api_url, headers=headers, files=files)
+    return response.status_code == 200
 
 # ********************************************************************************** #
 # ********************************************************************************** #
@@ -336,49 +356,11 @@ def ingest_list(request):
 
 
 # ----------------------------------------------------------------------- #
-# Function for delete an ingested document from the name of file
-# given a file name, this function delete all chunks of that file
+# View for delete all chunks given a name of an ingested document
 # ----------------------------------------------------------------------- #
-
-
 def delete_document_view(request, file_name):
     delete_document(file_name)
     return redirect('gestione:list_ingest')
-
-"""
-def delete_doc(request, file_name):
-    data = json_documenti()
-    doc_info_list = [{"doc_id": doc["doc_id"], "file_name": doc["doc_metadata"]["file_name"]} for doc in data["data"]]
-
-    # list of chunks to delete
-    doc_ids = []
-    for doc_info in doc_info_list:
-        if doc_info["file_name"] == file_name:
-            doc_ids.append(doc_info["doc_id"])
-
-    for doc_id in doc_ids:
-        api_url = HALFURL + 'ingest/'
-        api_url = api_url + str(doc_id)
-        headers = {'Accept': 'application/json'}
-
-        response = requests.delete(api_url, headers=headers)
-        if response.status_code != 200:
-            print("error during delete request")
-    
-    return redirect('gestione:list_ingest')
-   
-"""
-# --------------------------------------------------------------------- #
-# Funzione per ingestare un documento dato il path del documento
-# La funzione è utile per creare documenti e ingestarli senza passare
-# per la gui, quando una domanda viene approvata
-# --------------------------------------------------------------------- #
-def ingest_file(file_path):
-    api_url = HALFURL + "ingest"
-    headers = {'Accept': 'application/json'}
-    files = {'file': open(file_path, 'rb')}
-    response = requests.post(api_url, headers=headers, files=files)
-    return response.status_code == 200
 
 
 # ----------------------------------------------------------------------- #
@@ -521,54 +503,54 @@ def edit_file_name(request, file_pk):
             return redirect(reverse('gestione:check_upload', args=[file.ingestion_session.pk, file_not_supported]))
 
 
+# ------------------------------------------------------------------------------ #
+# View for replace a document during the ingestion, this function delete the
+# old version of document and ingest the actual version
+# ------------------------------------------------------------------------------ #
 def replace_file(request, file_pk):
     ingested_file = IngestedFile.objects.get(pk=file_pk)
     file_name = ingested_file.file_name
 
     delete_document(file_name)
     if ingest_file(str(ingested_file.file)):
-        ingested_file.stato='ok'
+        ingested_file.stato = 'ok'
         ingested_file.save()
         os.remove(str(ingested_file.file))
         file_not_supported = []
-        return redirect(reverse('gestione:check_upload', args=[ingested_file.ingestion_session.pk, file_not_supported ]))
+        return redirect(reverse('gestione:check_upload', args=[ingested_file.ingestion_session.pk, file_not_supported]))
     else:
-        print("non è andata molto bene nella reingestione del documento")
-"""
+        print("error during the new ingestion")
 
-# ----------------------------------------------------------------------------------------#
-# View associata ai pulsanti like/dislike nella chat per mandare la domanda all'admin
-# ----------------------------------------------------------------------------------------#
-def CreaDomanda(request, messaggio_pk, soddisfatto):
-    messaggio = Messaggio.objects.get(pk=messaggio_pk)
-    soddisfatto = soddisfatto
-    context = {'messaggio': messaggio, 'soddisfatto': soddisfatto}
 
-    # Controllo che non sia gia stata segnalata 
-    gia_segnalata = Domanda.objects.filter(messaggio=messaggio).exists()
-    if gia_segnalata:
-        return render(request, "thx.html", {'ok': 0})
+def create_question(request, answer_pk, satisfied):
+    answer = Answer.objects.get(pk=answer_pk)
+    satisfied = satisfied
+    context = {'answer': answer, 'satisfied': satisfied}
 
-    # Se la richiesta è di tipo post è perchè ho inviato il form
+    already_reported = Question.objects.filter(answer=answer).exists()
+    if already_reported:
+        return render(request, template_name="gestione/thx.html", context={'ok': 0})
+
     if request.method == 'POST':
-        form = InserisciDomandaForm(request.POST)
+        form = InsertQuestionForm(request.POST)
 
         # Se il form è valido creo e inserisco nel db la domanda
         if form.is_valid():
-            domanda = Domanda()
-            domanda.messaggio = messaggio
-            domanda.soddisfatto = soddisfatto
-            domanda.stato = 0
-            domanda.visualizzato = False
-            domanda.commento = form.cleaned_data['commento']
-            domanda.save()
-            return render(request, 'thx.html', {'ok': 1})
-
+            question = Question()
+            question.answer = answer
+            question.satisfied = satisfied
+            question.state = 0
+            question.displayed = False
+            question.comment = form.cleaned_data['comment']
+            question.save()
+            return render(request, template_name='gestione/thx.html', context={'ok': 1})
     else:
-        form = InserisciDomandaForm()
+        form = InsertQuestionForm()
         context['form'] = form
-        return render(request, template_name='ingest/crea_domanda.html', context=context)
+        return render(request, template_name='gestione/crea_domanda.html', context=context)
 
+
+"""
 
 # ------------------------------------------------------------------#
 # View dove l'admin decide che domande visualizzare per la 
