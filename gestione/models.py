@@ -37,7 +37,7 @@ class Question(models.Model):
     # is user satisfied of response ?
     satisfied = models.BooleanField(default=False)
     # comment from the user who sends the question to the admin
-    comment = models.CharField(max_length=300, default=' ')
+    comment = models.CharField(max_length=300, default=' ', blank=True, null=True)
 
 
 # ------------------------------------------------------------------------------------------------ #
@@ -52,7 +52,7 @@ class DocRetrivalRequest(models.Model):
 class DocRetrivalResponse(models.Model):
     doc_request = models.ForeignKey(DocRetrivalRequest, on_delete=models.CASCADE)
     text = models.CharField(max_length=2048)
-    score = models.IntegerField(default=0)
+    score = models.FloatField(default=0)
     file_name = models.CharField(max_length=60, blank=True, null=True)
     doc_id = models.CharField(max_length=60, blank=True, null=True)
 

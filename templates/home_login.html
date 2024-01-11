@@ -55,10 +55,10 @@
                         Revisione Risposte
                         </a>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">Non visualizzate </a>
-                            <a class="dropdown-item" href="#">Visualizzate in attesa</a>
-                            <a class="dropdown-item" href="#">Approvate</a>
-                            <a class="dropdown-item" href="#">Rifiutate</a>
+                            <a class="dropdown-item" href="{% url 'gestione:list_question' 'not_displayed' %}">Non visualizzate </a>
+                            <a class="dropdown-item" href="{% url 'gestione:list_question' 'displayed_to_be_approved' %}">Visualizzate in attesa</a>
+                            <a class="dropdown-item" href="{% url 'gestione:list_question' 'approved' %}">Approvate</a>
+                            <a class="dropdown-item" href="{% url 'gestione:list_question' 'not_approved' %}">Rifiutate</a>
                         </div>
                     </li>
                 </ul>

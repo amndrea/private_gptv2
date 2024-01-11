@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+
+{% endblock %}
+
+
+{% block content %}
+    <div style="text-align: center;">
+        <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+
+
+
+            <div class="card text-center" style="background-color: {% if question.satisfied %}#7FFFD4{% else %}#FF7F7F{% endif %}" >
+                <div class="card-body">
+                    <p> L'utente {{ answers.user.username }} ha effettuato la domanda </p>
+                    <h6 class="card-title" style="color:#0000EE">
+                        {{answers.user_request}}</h6>
+                    <p> E-lisaGPT ha risposto </p>
+                    <h6 style="color:#0000EE"> {{answers.answer}} </h6>
+                    <p> Il commento di {{ answers.user.username }} è: <br>  <span style="color: #0000EE"> {{ question.comment }} </span></p>
+                    <div class="div-pulsanti">
+                        <form method="POST" action="{% url 'gestione:show_question' question.pk 2 %}">
+                            {% csrf_token %}
+                            <button class="my_button" type="submit"> Non Utile</button>
+                        </form> <br>
+                        <form method="POST" action="{% url 'gestione:show_question' question.pk 1 %}">
+                            {% csrf_token %}
+                            <button class="my_button" type="submit"> Utile</button>
+                        </form>
+                    </div>
+
+                </div>
+                <div class="card-footer text-muted">
+                </div>
+            </div>
+
+
+
+    </div>
+
+
+
+{% endblock %}

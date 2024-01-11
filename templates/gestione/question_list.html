@@ -2,41 +2,94 @@
 {% load static %}
 
 {% block head %}
+    <style>
+        .container {
+            width: auto;  /* larghezza */
+            height: 600px;  /* altezza */
+            overflow-y: auto; /* barra di scorrimento verticale */
+        }
+        .table-container {
+            width: 100%; /* tabella con dim massima del container */
+        }
+        .not_displayed{
+            background-color: #00C78C;
+        }
+        .to_be_approved{
+            
+        }
+        .approved{
+            
+        }
+        .not_approved{
+            
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
     <div style="text-align: center;">
         <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
-
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Data</th>
-                    <th scope="col">Utente</th>
-                    <th scope="col">Nome File </th>
-                    <th scope="col">Domanda</th>
-                    <th scope="col">Risposta</th>
-                </tr>
-            </thead>
-            {% for question in questions %}
-                <tbody>
-                    <tr>
-                        <th scope="row">{{forloop.counter0}}</th>
-                        <td>{{ question.answer.data }}</td>
-                        <td>{{ question.answer.user.username }}</td>
-                        <td>{{ question.answer.file_name }}</td>
-                        <td> {{ question.answer.user_request|slice:":25" }} </td>
-                        <td> {{ question.answer.answer|slice:":25" }} </td>
-                        <td>
-                            <form method="GET" action="{% url ':visualizza_domanda' question_pk=question.pk state=0 %}">
-                                {% csrf_token %}
-                                <button type="submit" class="my_button">Visualizza</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
-            {% endfor%}
-        </table>
+        
+        {% if what == 'not_displayed' %}
+            <h3 style="color: cadetblue;"> <strong> Segnalazioni non visualizzate</strong></h3> <br>
+        {% elif what == 'displayed_to_be_approved' %}
+            <h3 style="color: cadetblue;"> <strong> Segnalazioni visualizzate ancora da approvare</strong></h3> <br>
+        {% elif what == 'approved' %}
+            <h3 style="color: cadetblue;"> <strong> Segnalazioni gia approvate</strong></h3> <br>
+        {% else %}
+            <h3 style="color: cadetblue;"> <strong> Segnalazioni non approvate </strong></h3> <br>
+        {% endif %}
+        <div class="container">
+            <div class="table-container">
+            
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th class=
+                                        "{% if what == 'not_displayed' %} not_displayed {% elif what == 'displayed_to_be_approved' %} to_be_approved 
+                                         {% elif what == 'approved' %} approved {% else  %}not_approved {% endif %}"scope="col">#</th>
+                            <th class=
+                                        "{% if what == 'not_displayed' %} not_displayed {% elif what == 'displayed_to_be_approved' %} to_be_approved 
+                                         {% elif what == 'approved' %} approved {% else  %}not_approved {% endif %}"scope="col">Data</th>
+                            <th class=
+                                        "{% if what == 'not_displayed' %} not_displayed {% elif what == 'displayed_to_be_approved' %} to_be_approved 
+                                         {% elif what == 'approved' %} approved {% else  %}not_approved {% endif %}"scope="col">Utente</th>
+                            <th class=
+                                        "{% if what == 'not_displayed' %} not_displayed {% elif what == 'displayed_to_be_approved' %} to_be_approved 
+                                         {% elif what == 'approved' %} approved {% else  %}not_approved {% endif %}"scope="col">Nome File</th>
+                            <th class=
+                                        "{% if what == 'not_displayed' %} not_displayed {% elif what == 'displayed_to_be_approved' %} to_be_approved 
+                                         {% elif what == 'approved' %} approved {% else  %}not_approved {% endif %}"scope="col">Domanda</th>
+                            <th class=
+                                        "{% if what == 'not_displayed' %} not_displayed {% elif what == 'displayed_to_be_approved' %} to_be_approved 
+                                         {% elif what == 'approved' %} approved {% else  %}not_approved {% endif %}"scope="col">Risposta</th>
+                            <th class=
+                                        "{% if what == 'not_displayed' %} not_displayed {% elif what == 'displayed_to_be_approved' %} to_be_approved 
+                                         {% elif what == 'approved' %} approved {% else  %}not_approved {% endif %}"scope="col"></th>
+                        </tr>
+                    </thead>
+                    {% for question in questions %}
+                        <tbody>
+                            <tr>
+                                <th scope="row">{{forloop.counter0}}</th>
+                                <td>{{ question.answer.date }}</td>
+                                <td>{{ question.answer.user.username }}</td>
+                                <td>{{ question.answer.file_name }}</td>
+                                <td> {{ question.answer.user_request|slice:":25" }} </td>
+                                <td> {{ question.answer.answer|slice:":25" }} </td>
+                                <td>
+                                    <form method="GET" action="{% url 'gestione:show_question' question_pk=question.pk state=0%}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="my_button">Visualizza</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    {% endfor %}
+                </table>
+            
+            </div>
+        </div>
+        <a class="my_button" href="{% url 'home_login' %}"> Home</a> <br> <br>
     </div>
 {% endblock %}

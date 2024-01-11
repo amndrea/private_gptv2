@@ -245,12 +245,18 @@ def ingest_file(file_path):
 # ----------------------------------------------------------------------- #
 # Function that show the actual health of E-ListaGPT server
 # ----------------------------------------------------------------------- #
+# TODO gestire un try, cathc, nella pagina iniziale, se il server e down, dopo il login mostro questa porcheria
+#   altrimenti proseguo con la home utente loggato, in generale nel template home utente loggato, se lo stato è
+#      false anzi che fare render, visualizzo un errore e basta, altrimenti vado avanti con la home utente loggato
 def health(request):
-    url = "http://10.1.1.109:8001/health"
-    headers = {'Accept': 'application/json'}
-    response = requests.get(url, headers=headers)
-    status = response.status_code
-    return render(request, template_name='gestione/health.html', context={'status': status})
+    try:
+        url = "http://10.1.1.109:8001/health"
+        headers = {'Accept': 'application/json'}
+        response = requests.get(url, headers=headers)
+        status = response.status_code
+        return render(request, template_name='gestione/health.html', context={'status': status})
+    except Exception as e:
+        return render(request, template_name='gestione/health.html', context={'status': 0})
 
 
 # -------------------------------------------------------------------------------- #
@@ -277,7 +283,7 @@ def completion(request):
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         payload = {
             'prompt': user_request,
-            'system_prompt': 'talk to me on italian, your name is Elisa',
+            'system_prompt': 'Talk only in Italian',
             'use_context': 'true'
         }
         response = requests.post(api_url, headers=headers, json=payload)
@@ -290,6 +296,7 @@ def completion(request):
 
             first_result = result["choices"][0]
             content_response = first_result["message"]["content"]
+            content_response = content_response.replace("```", "")
             doc_id = first_result["sources"][0]["document"]["doc_id"]
             file_name = first_result["sources"][0]["document"]["doc_metadata"]["file_name"]
             create_answer(user_request, content_response, request.user, doc_id=doc_id, file_name=file_name)
@@ -553,7 +560,6 @@ def create_question(request, answer_pk, satisfied):
         return render(request, template_name='gestione/crea_domanda.html', context=context)
 
 
-
 # ----------------------------------------------------------------------------------------#
 # View per mostrare tutte le domande in attesa di approvazione
 # ----------------------------------------------------------------------------------------#
@@ -568,16 +574,16 @@ class QuestionList(PermissionRequiredMixin, ListView):
 
         # Domande ancora non visualizzate
         if what_to_view == 'not_displayed':
-            queryset = Question.objects.filter(displayed=0).order_by('-answer__data')
+            queryset = Question.objects.filter(displayed=0).order_by('-answer__date')
         # Domande gia visualizzate e ancora non approvate  
         elif what_to_view == 'displayed_to_be_approved':
-            queryset = Question.objects.filter(displayed=1).filter(state=0).order_by('-messaggio__data')
+            queryset = Question.objects.filter(displayed=1).filter(state=0).order_by('-answer__date')
         # Domande gia approvate
         elif what_to_view == 'approved':
-            queryset = Question.objects.filter(state=1).order_by('-messaggio__data')
+            queryset = Question.objects.filter(state=1).order_by('-answer__date')
         # Domande non approvate
         else:
-            queryset = Question.objects.filter(state=2).order_by('-messaggio__data')
+            queryset = Question.objects.filter(state=2).order_by('-answer__date')
 
         return queryset
 
@@ -587,32 +593,27 @@ class QuestionList(PermissionRequiredMixin, ListView):
         context['questions'] = self.get_queryset()
         return context
 
-"""
-def visualizza_domanda(request, domanda_pk, stato=0):
-    domanda = Domanda.objects.get(pk=domanda_pk)
-    if request.method == 'GET':
-        context = {}
-        # La domanda passa in stato visualizzato
-        if domanda.visualizzato == False:
-            domanda.visualizzato = True
-            domanda.save()
-        context['visualizzato'] = '1'
-        context['domanda'] = domanda
-        context['messaggio'] = Messaggio.objects.get(pk=domanda.messaggio.pk)
-        return render(request, template_name="ingest/visualizza_domanda.html", context=context)
 
-    # Se qui ci arrivo da una post è perche ai pulsanti ho legato un metodo POST che modifica lo
-    # stato della domananda, approvandola o rifiutandola
+def show_question(request, question_pk, state=0):
+    question = Question.objects.get(pk=question_pk)
+    context = {
+        'question': question,
+        'answers': Answer.objects.get(pk=question.answer.pk),
+    }
+    if request.method == 'GET':
+        print("sono nella get")
+        if not question.displayed:
+            question.displayed = True
+            question.save()
+            context['displayed'] = '1'
+        return render(request, template_name='gestione/mostra_domanda.html', context=context)
     else:
-        # @TODO devo salvare il file da ingestare
         # Se lo stato è uguale a 1 creo un nuovo documento con la coppia domanda_risposta e lo ingesto
-        if stato == 1:
+        if state == 1:
             pass
         else:
             # La domanda passa in stato non approvato
-            domanda.stato = 2
-            domanda.save()
+            question.state = 2
+            question.save()
             # Rendero su un template dove visualizzo un messaggio di ok e ritorno alla lista di domande
-            return render(request, template_name="ingest/end_revisione.html")
-"""
-
+            return render(request, template_name="gestione/end_revisione.html")
