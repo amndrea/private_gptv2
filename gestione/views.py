@@ -15,6 +15,7 @@ import os
 import magic
 import re
 import requests
+import PyPDF2
 
 
 # ************************************************************************ #
@@ -161,8 +162,7 @@ def supported_format_file(file_path):
     mime = magic.Magic()
     file_type = mime.from_file(file_path)
 
-    if file_type == "ASCII text" or file_type.startswith(
-            "PDF document") or "Unicode text" in file_type or "UTF-8 text" in file_type:
+    if file_type == "ASCII text" or "Unicode text" in file_type or "UTF-8 text" in file_type:
         return 'text'
     if file_type == "OpenDocument Text":
         return 'opendocument'
@@ -172,6 +172,8 @@ def supported_format_file(file_path):
         return 'openspreadsheet'
     if file_type.startswith("Microsoft Excel"):
         return 'excel'
+    if file_type.startswith("PDF document"):
+        return 'pdf'
     return '1'
 
 
@@ -196,9 +198,27 @@ def convert_unsupported_word_file(file_path_source, dir_src, types):
     original_file_name = os.path.basename(file_path_source)
     with open(dir_src + original_file_name + ".txt", "w") as text_file:
         text_file.write(extracted_text)
+
     return text_file.name
 
 
+def extract_text_from_pdf(pdf_path, dir_src):
+    with open(pdf_path, 'rb') as file:
+        pdf_reader = PyPDF2.PdfReader(file)
+        text = ''
+        for page_num in range(len(pdf_reader.pages)):
+            text += pdf_reader.pages[page_num].extractText()
+    original_file_name = os.path.basename(pdf_path)
+    with open(dir_src + original_file_name + ".txt", "w") as text_file:
+        text_file.write(text)
+
+    return text_file.name
+
+
+
+# @ TODO queste porcherie sono da implementare
+def extract_text_from_excel(excel_path):
+    pass
 # ------------------------------------------------------------------------------------------ #
 # Function that, given the name of a file, deletes all the chunks of that file
 # from the ingested documents
@@ -259,6 +279,10 @@ def health(request):
         return render(request, template_name='gestione/health.html', context={'status': 0})
 
 
+
+# TODO provare anche con la lista di messaggi
+
+# TODO provare la funzione di ingestion di un semplice text per i messaggi generati correttamente
 # -------------------------------------------------------------------------------- #
 # Method for completion retrival, if the request method is get, this function
 # redirect to chat template
@@ -411,7 +435,9 @@ def upload(request):
                     files_not_supported.append(file_path)
                 elif supported_format_file(file_path) == 'text':
                     files_ok.append(file_path)
-
+                elif supported_format_file(file_path) == 'pdf':
+                    file_text = extract_text_from_pdf(file_path,dir)
+                    files_ok.append(file_text)
                 elif supported_format_file(file_path) == 'opendocument':
                     file_text = convert_unsupported_word_file(file_path, dir, 'open')
                     files_ok.append(file_text)
