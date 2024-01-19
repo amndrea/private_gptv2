@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{%  block head %}
+    <style>
+        .my_button {
+            margin-right: 10px; /* Modifica il valore a seconda dello spazio desiderato */
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+        <div style="text-align: center;">
+            <img src="{% static 'imgs/logo.png'%}" alt="GRUPPO CONCORDE "> <br> <br>
+            <h3 style="color: cadetblue;">  Stato della risposta aggiornato con successo  </h3> <br>
+        </div>
+        
+        <div class="div-bassa-2">
+            <a href="{% url 'home_login'%}" class="my_button"> Home </a>
+            <a href="{% url 'gestione:list_question' 'not_displayed'%}" class="my_button"> Risposte da visualizzare </a>
+            <a href="{% url 'gestione:list_question' 'displayed_to_be_approved'%}" class="my_button"> Risposte visualizzate </a>
+        </div>
+{% endblock %}

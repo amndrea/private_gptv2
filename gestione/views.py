@@ -202,6 +202,7 @@ def convert_unsupported_word_file(file_path_source, dir_src, types):
     return text_file.name
 
 
+# Function for extract text from a PDF file
 def extract_text_from_pdf(pdf_path, dir_src):
     with open(pdf_path, 'rb') as file:
         pdf_reader = PyPDF2.PdfReader(file)
@@ -216,7 +217,7 @@ def extract_text_from_pdf(pdf_path, dir_src):
 
 
 
-# @ TODO queste porcherie sono da implementare
+# @TODO queste porcherie sono da implementare
 def extract_text_from_excel(excel_path):
     pass
 # ------------------------------------------------------------------------------------------ #
@@ -265,9 +266,6 @@ def ingest_file(file_path):
 # ----------------------------------------------------------------------- #
 # Function that show the actual health of E-ListaGPT server
 # ----------------------------------------------------------------------- #
-# TODO gestire un try, cathc, nella pagina iniziale, se il server e down, dopo il login mostro questa porcheria
-#   altrimenti proseguo con la home utente loggato, in generale nel template home utente loggato, se lo stato è
-#      false anzi che fare render, visualizzo un errore e basta, altrimenti vado avanti con la home utente loggato
 def health(request):
     try:
         url = "http://10.1.1.109:8001/health"
@@ -278,11 +276,6 @@ def health(request):
     except Exception as e:
         return render(request, template_name='gestione/health.html', context={'status': 0})
 
-
-
-# TODO provare anche con la lista di messaggi
-
-# TODO provare la funzione di ingestion di un semplice text per i messaggi generati correttamente
 # -------------------------------------------------------------------------------- #
 # Method for completion retrival, if the request method is get, this function
 # redirect to chat template
@@ -627,19 +620,24 @@ def show_question(request, question_pk, state=0):
         'answers': Answer.objects.get(pk=question.answer.pk),
     }
     if request.method == 'GET':
-        print("sono nella get")
         if not question.displayed:
             question.displayed = True
             question.save()
             context['displayed'] = '1'
         return render(request, template_name='gestione/mostra_domanda.html', context=context)
     else:
-        # Se lo stato è uguale a 1 creo un nuovo documento con la coppia domanda_risposta e lo ingesto
         if state == 1:
-            pass
+            question.state = 1
+            question.save()
+            answer = Answer.objects.get(pk=question.answer_id)
+            text = answer.user_request + answer.answer
+            file_name = "risposta_" + str(answer.pk)
+            with open(file_name, 'w') as f:
+                f.write(text)
+            ingest_file(file_name)
+            os.remove(file_name)
+            return render(request, template_name="gestione/end_revisione.html")
         else:
-            # La domanda passa in stato non approvato
             question.state = 2
             question.save()
-            # Rendero su un template dove visualizzo un messaggio di ok e ritorno alla lista di domande
             return render(request, template_name="gestione/end_revisione.html")

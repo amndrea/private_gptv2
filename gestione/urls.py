@@ -3,7 +3,6 @@ from .views import *
 
 app_name = "gestione"
 
-
 urlpatterns = [
 
     # URL at which I view the server's health status
@@ -43,8 +42,5 @@ urlpatterns = [
     path('list_question/<str:what>/',QuestionList.as_view(), name="list_question"),
 
     # URL for show one questions
-    path('show_question/<int:question_pk>/<int:state>/', show_question, name="show_question")
-    # URL al quale l'admin visualizza una risposta nello specifico e decide se approvarla o no
-    #path('visualizza_domanda/<int:domanda_pk>/<int:stato>/', visualizza_domanda, name="visualizza_domanda"),
-
+    path('show_question/<int:question_pk>/<int:state>/', show_question, name="show_question"),
 ]
