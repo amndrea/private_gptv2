@@ -216,7 +216,7 @@ def extract_text_from_pdf(pdf_path, dir_src):
     return text_file.name
 
 
-
+#
 # @TODO queste porcherie sono da implementare
 def extract_text_from_excel(excel_path):
     pass
