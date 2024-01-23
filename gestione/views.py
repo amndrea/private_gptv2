@@ -1,3 +1,5 @@
+import csv
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
@@ -16,7 +18,7 @@ import magic
 import re
 import requests
 import PyPDF2
-
+import pandas as pd
 
 # ************************************************************************ #
 #                      privateGPT server URL
@@ -217,9 +219,28 @@ def extract_text_from_pdf(pdf_path, dir_src):
 
 
 #
-# @TODO queste porcherie sono da implementare
-def extract_text_from_excel(excel_path):
-    pass
+def leggi_file_csv_con_intestazione(percorso_file_csv):
+    dati = []
+
+    with open(percorso_file_csv, mode='r', encoding='utf-8', errors='replace') as file_csv:
+        lettore_csv = csv.reader(file_csv)
+
+        # Leggi la prima riga come intestazione
+        intestazione = next(lettore_csv)
+
+        # Itera attraverso le righe rimanenti
+        for riga in lettore_csv:
+            riga_associata = dict(zip(intestazione, riga))
+            dati.append(riga_associata)
+
+    file_testuale = str(percorso_file_csv)+".txt"
+    with open(file_testuale, mode='w') as file_txx:
+        for dato in dati:
+            file_txx.write(str(dato))
+            file_txx.write('\n')
+
+
+
 # ------------------------------------------------------------------------------------------ #
 # Function that, given the name of a file, deletes all the chunks of that file
 # from the ingested documents
